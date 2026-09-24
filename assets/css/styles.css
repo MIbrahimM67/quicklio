@@ -335,3 +335,5 @@ textarea{min-height:8rem;resize:vertical}
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+.result-panel:has(#processedWrap:not([hidden]))>.placeholder{display:none}
