@@ -53,3 +53,20 @@ The Products dropdown groups current tools by category and provides direct tool 
 
 ## Responsive floor
 Every page must work without horizontal scrolling at 320, 375, 414, and 768 CSS px. Desktop-only nav collapses to a compact mobile menu.
+
+
+## Icon system
+- Use the self-hosted Lucide SVG sprite at `/assets/icons/lucide.svg`.
+- Do not use emoji, Unicode arrows, text chevrons, or mixed icon families in production UI.
+- Use `<svg class="icon"><use href="/assets/icons/lucide.svg#i-…"></use></svg>`.
+- Arrow-right is the only forward-action arrow; chevron-down is the only disclosure chevron.
+- Icons inherit `currentColor` and use the same Lucide stroke geometry throughout the site.
+- Decorative tool illustrations should be built from crisp HTML/CSS/SVG, not generated raster images containing text.
+
+## Anti-slop QA
+Before shipping a new page:
+1. Verify no text overflows at 320, 375, 414, 768, 1024, and desktop widths.
+2. Never apply `white-space: nowrap` globally to anchors.
+3. Check for stray emoji or Unicode arrow glyphs in navigation, cards, and calls to action.
+4. Keep one icon family and one arrow language.
+5. Avoid AI-generated text inside images; all brand text must remain real HTML/SVG.
