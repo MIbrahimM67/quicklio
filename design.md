@@ -28,7 +28,7 @@ Defined centrally in `assets/css/styles.css`.
 - Brand green: `--color-green`
 - Warm paper: `--color-paper`
 - Ink: `--color-ink`
-- Category surfaces: candle, PDF, Halloween, pumpkin, Christmas.
+- Category surfaces: candle, PDF, images, social, money, crafts, Halloween, pumpkin, Christmas.
 
 ## Structure
 - Homepage: value-led split hero → search/filter → popular tools → trust strip → language/support.
@@ -43,6 +43,8 @@ Top-level navigation is intentionally product-oriented rather than tool-name spa
 - Language menu
 - Support Us
 The Products dropdown groups current tools by category and provides direct tool links.
+- Grouped product catalogue: Images, PDF & Print, Social, Money, Crafts, Candle, Halloween, Christmas.
+- Category links may deep-link to the homepage with `?category=<slug>#tools`.
 
 ## Interaction
 - Native `details` for dropdown navigation.
