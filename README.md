@@ -27,6 +27,15 @@ Static, browser-only tools site. No framework and no build step.
 - `/en/images/online-image-editor/`
 - `/en/pdf/online-pdf-editor/`
 
+- `/en/pdf/merge-pdf/`
+- `/en/pdf/split-pdf/`
+- `/en/pdf/compress-pdf/`
+- `/en/pdf/pdf-to-jpg/`
+- `/en/pdf/image-to-pdf/`
+- `/en/pdf/add-watermark-to-pdf/`
+- `/en/pdf/add-page-numbers-to-pdf/`
+- `/en/pdf/crop-pdf/`
+
 ## Run locally
 ```bash
 npm test
@@ -43,3 +52,6 @@ Keep Quicklio as one repository while tools share the same domain, CSS, SEO stru
 
 ## Editors
 The browser editors use Fabric.js 7.4.0 for interactive canvas objects. The PDF editor additionally uses PDF.js 6.3.289 for page rendering and pdf-lib for PDF export. Untouched PDF pages are copied from the original file; edited or rotated pages are flattened for predictable output.
+
+## Free PDF suite
+Quicklio provides browser-side merge, split/extract, compression, PDF-to-JPG, images-to-PDF, watermark, page-number, crop, and annotation/editing workflows. Compression is intentionally raster-based and warns that selectable text, forms, links, and vector fidelity may be lost.
