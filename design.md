@@ -74,7 +74,7 @@ Before shipping a new page:
 5. Avoid AI-generated text inside images; all brand text must remain real HTML/SVG.
 
 ## Catalogue scale
-- Homepage and Products navigation currently expose 20 tools.
+- Homepage and Products navigation currently expose 28 tools.
 - Print preparation is treated as part of the PDF & Print discovery category even when the route lives under `/en/print/`.
 - Labels is a distinct category because CSV-to-label workflows have different user intent from general PDF tools.
 
@@ -83,3 +83,8 @@ Before shipping a new page:
 - Toolbars use the shared Lucide sprite; no emoji or text-glyph controls.
 - Desktop: toolbar + sidebar/page strip + large canvas. Mobile: sidebar/page strip collapses into normal document flow.
 - Contact-sheet ordering uses visible draggable thumbnails; output order must mirror the arranged thumbnail order.
+
+## PDF suite surfaces
+- Search-intent pages stay separate even when they share implementation helpers: Merge, Split/Extract, Compress, PDF→JPG, Images→PDF, Watermark, Page Numbers, Crop, Editor, booklet, binding-margin, bleed, and shipping-label workflows.
+- Do not imitate third-party branding or page composition; only common document-tool functionality is used as product inspiration.
+- Destructive/rasterizing operations must disclose losses before processing.
