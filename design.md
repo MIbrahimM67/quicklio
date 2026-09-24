@@ -28,7 +28,7 @@ Defined centrally in `assets/css/styles.css`.
 - Brand green: `--color-green`
 - Warm paper: `--color-paper`
 - Ink: `--color-ink`
-- Category surfaces: candle, PDF, images, social, money, crafts, Halloween, pumpkin, Christmas.
+- Category surfaces: candle, PDF/print, images, labels, social, money, crafts, Halloween, pumpkin, Christmas.
 
 ## Structure
 - Homepage: value-led split hero → search/filter → popular tools → trust strip → language/support.
@@ -43,7 +43,7 @@ Top-level navigation is intentionally product-oriented rather than tool-name spa
 - Language menu
 - Support Us
 The Products dropdown groups current tools by category and provides direct tool links.
-- Grouped product catalogue: Images, PDF & Print, Social, Money, Crafts, Candle, Halloween, Christmas.
+- Grouped product catalogue: Images, PDF & Print, Labels, Social, Money, Crafts, Candle, Halloween, Christmas.
 - Category links may deep-link to the homepage with `?category=<slug>#tools`.
 
 ## Interaction
@@ -72,3 +72,8 @@ Before shipping a new page:
 3. Check for stray emoji or Unicode arrow glyphs in navigation, cards, and calls to action.
 4. Keep one icon family and one arrow language.
 5. Avoid AI-generated text inside images; all brand text must remain real HTML/SVG.
+
+## Catalogue scale
+- Homepage and Products navigation currently expose 18 tools.
+- Print preparation is treated as part of the PDF & Print discovery category even when the route lives under `/en/print/`.
+- Labels is a distinct category because CSV-to-label workflows have different user intent from general PDF tools.
