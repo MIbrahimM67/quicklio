@@ -9,17 +9,18 @@ Quicklio is a warm, practical browser-tools brand: approachable enough for every
 
 ## Visual language
 - Warm ivory page background rather than sterile white.
+- Selective glass/depth is allowed for floating decorative tool objects, search, and category chips using translucency, inset highlights, and restrained shadows; avoid full-page glassmorphism.
 - Quicklio green is the single brand anchor.
 - Tool categories get soft pastel surfaces, but the global brand stays green + ink.
 - Soft 12–22px radii are allowed because the brand reference explicitly calls for a friendly consumer-tool surface; avoid nested card-on-card excess.
 - Subtle shadows only on elevated navigation, hero containers, and working panels.
 
 ## Logo
-Use `/assets/brand/quicklio-mark.svg` with the Manrope wordmark. The mark combines a circular Q-like silhouette with a lightning cut to communicate speed and utility.
+Use `/assets/brand/quicklio-mark.svg` with the Inter wordmark. The mark combines a circular Q-like silhouette with a lightning cut to communicate speed and utility.
 
 ## Typography
-- Display/marketing: Fraunces 700–900, roman only.
-- UI/body: Manrope 400–800.
+- Display/marketing: Space Grotesk 500–700, roman only.
+- UI/body: Inter 400–800.
 - Mono: system mono only when a technical value genuinely benefits.
 - Tool titles use Manrope rather than Fraunces so working pages remain utilitarian.
 
@@ -32,6 +33,8 @@ Defined centrally in `assets/css/styles.css`.
 
 ## Structure
 - Homepage: value-led split hero → search/filter → popular tools → trust strip → language/support.
+- Hero hierarchy is explicit: promise badge → display heading → explanatory copy → search → labeled category browse.
+- Homepage hero may run wider than the standard shell so the primary marketing surface has more breathing room.
 - Tool pages: branded tool hero → two-panel workbench → concise education below.
 - Content pages: simple content shell using the same header/footer.
 
