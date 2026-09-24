@@ -16,6 +16,14 @@ Static, browser-only tools site. No framework and no build step.
 - `/en/finance/payday-bills-planner/`
 - `/en/crafts/yarn-amount-calculator/`
 
+- `/en/images/passport-photo-maker/`
+- `/en/print/split-image-for-printing/`
+- `/en/pdf/add-bleed-and-crop-marks/`
+- `/en/labels/barcode-label-sheet-generator/`
+- `/en/images/photo-contact-sheet-maker/`
+- `/en/pdf/resize-shipping-label-to-4x6/`
+- `/en/images/dpi-print-size-calculator/`
+
 ## Run locally
 ```bash
 npm test
@@ -23,9 +31,9 @@ python3 -m http.server 8000
 ```
 Open `http://localhost:8000/`.
 
-The PDF page loads `pdf-lib` 1.17.1 from jsDelivr with a pinned URL. The user's PDF itself is processed in the browser and is not uploaded by this code. For a fully self-hosted deployment, download the same UMD file into `assets/vendor/` and replace the script URL.
+PDF-producing tools load `pdf-lib` 1.17.1 from jsDelivr with a pinned URL. The barcode/QR label tool additionally loads pinned `bwip-js` 4.11.4 in the browser. The user's PDF itself is processed in the browser and is not uploaded by this code. For a fully self-hosted deployment, download the same UMD file into `assets/vendor/` and replace the script URL.
 
-The Halloween candy calculator and payday planner can optionally store data in browser local storage. Image tools, social image fitting, pumpkin stencils, and PDF tools process selected files in the browser. Calculation-only tools do not require an account or server database.
+The Halloween candy calculator and payday planner can optionally store data in browser local storage. Image tools, photo-sheet tools, poster tiling, social image fitting, pumpkin stencils, barcode CSV data, and PDF tools process selected files/data in the browser. Calculation-only tools do not require an account or server database.
 
 ## Repository strategy
 Keep Quicklio as one repository while tools share the same domain, CSS, SEO structure, and deployment. Split a future tool only if it needs an independent backend/deployment.
