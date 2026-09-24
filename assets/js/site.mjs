@@ -15,7 +15,9 @@ document.addEventListener('pointerdown',(event)=>{
 const search=document.querySelector('[data-tool-search]');
 const cards=[...document.querySelectorAll('[data-tool-card]')];
 const filters=[...document.querySelectorAll('[data-tool-filter]')];
-let activeFilter='all';
+const allowedFilters=new Set(['all','image','pdf','social','finance','crafts','candle','halloween','christmas']);
+const requestedFilter=new URLSearchParams(location.search).get('category');
+let activeFilter=allowedFilters.has(requestedFilter)?requestedFilter:'all';
 
 function applyToolFilter(){
   if(!cards.length)return;
@@ -35,6 +37,7 @@ function applyToolFilter(){
 }
 
 for(const button of filters){
+  button.classList.toggle('is-active',button.dataset.toolFilter===activeFilter);
   button.addEventListener('click',()=>{
     activeFilter=button.dataset.toolFilter||'all';
     for(const other of filters)other.classList.toggle('is-active',other===button);
@@ -59,8 +62,10 @@ for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
     try{
       if(navigator.share){await navigator.share(payload);return;}
       await navigator.clipboard.writeText(payload.url);
-      shareButton.textContent='Link copied';
-      setTimeout(()=>shareButton.textContent='Share Quicklio',1600);
+      const label=shareButton.querySelector('span')||shareButton;
+      const old=label.textContent;
+      label.textContent='Link copied';
+      setTimeout(()=>label.textContent=old,1600);
     }catch{}
   });
 }
