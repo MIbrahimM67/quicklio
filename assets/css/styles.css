@@ -386,3 +386,12 @@ textarea{min-height:8rem;resize:vertical}
   .tool-card{min-height:15rem}
   .tool-card-icon{height:7rem}
 }
+
+.mega-category>span{min-width:0;white-space:normal}
+.mega-category>.icon:last-child{margin-left:auto}
+.mega-link[href*="/candles/"] .mega-icon,.tool-card[data-category="candle"] .tool-card-icon{color:oklch(57% .16 65)}
+.mega-link[href*="/pdf/"] .mega-icon,.tool-card[data-category="pdf"] .tool-card-icon{color:oklch(55% .14 255)}
+.mega-link[href*="halloween-candy"] .mega-icon,.tool-card[href*="halloween-candy"] .tool-card-icon{color:oklch(58% .18 35)}
+.mega-link[href*="pumpkin-stencil"] .mega-icon,.tool-card[href*="pumpkin-stencil"] .tool-card-icon{color:oklch(56% .13 300)}
+.mega-link[href*="/christmas/"] .mega-icon,.tool-card[data-category="christmas"] .tool-card-icon{color:var(--color-green)}
+.scene-screen-inner strong,.scene-screen-inner span{white-space:normal}
