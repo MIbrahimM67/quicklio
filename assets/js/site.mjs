@@ -12,6 +12,37 @@ document.addEventListener('pointerdown',(event)=>{
   for(const item of allDetails)item.removeAttribute('open');
 });
 
+/* ── mega-menu: hover a left category → filter right-side tools ── */
+(function(){
+  const cats=[...document.querySelectorAll('.mega-category[data-mega-cat]')];
+  const links=[...document.querySelectorAll('.mega-link[data-mega-cat]')];
+  const groups=[...document.querySelectorAll('.mega-group')];
+  if(!cats.length||!links.length)return;
+
+  function activate(cat){
+    for(const c of cats)c.classList.toggle('is-mega-active',c.dataset.megaCat===cat);
+    if(cat==='all'||cat==='languages'){
+      for(const l of links)l.classList.remove('is-mega-hidden');
+      for(const g of groups)g.classList.remove('is-mega-hidden');
+      return;
+    }
+    for(const l of links)l.classList.toggle('is-mega-hidden',l.dataset.megaCat!==cat);
+    for(const g of groups){
+      const visible=[...g.querySelectorAll('.mega-link[data-mega-cat]')].some(l=>l.dataset.megaCat===cat);
+      g.classList.toggle('is-mega-hidden',!visible);
+    }
+  }
+  function reset(){
+    for(const c of cats)c.classList.remove('is-mega-active');
+    for(const l of links)l.classList.remove('is-mega-hidden');
+    for(const g of groups)g.classList.remove('is-mega-hidden');
+  }
+  for(const c of cats)c.addEventListener('mouseenter',()=>activate(c.dataset.megaCat));
+  const panel=document.querySelector('.mega-panel');
+  if(panel)panel.addEventListener('mouseleave',reset);
+})();
+
+
 const search=document.querySelector('[data-tool-search]');
 const cards=[...document.querySelectorAll('[data-tool-card]')];
 const filters=[...document.querySelectorAll('[data-tool-filter]')];
