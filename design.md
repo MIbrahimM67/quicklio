@@ -91,3 +91,12 @@ Before shipping a new page:
 - Search-intent pages stay separate even when they share implementation helpers: Merge, Split/Extract, Compress, PDF→JPG, Images→PDF, Watermark, Page Numbers, Crop, Editor, booklet, binding-margin, bleed, and shipping-label workflows.
 - Do not imitate third-party branding or page composition; only common document-tool functionality is used as product inspiration.
 - Destructive/rasterizing operations must disclose losses before processing.
+
+
+## Hybrid 3D direction
+- Quicklio uses a hybrid 3D visual language on the homepage hero only.
+- Floating tool objects use clay-like front faces, darker extruded side layers, specular highlights, restrained perspective, and soft contact shadows.
+- Floating category chips use translucent glass surfaces with blur, inset highlights, and shallow depth rather than clay styling.
+- Search and category controls may use subtle physical depth, but text, navigation, tool workbenches, and long-form content stay visually flat for readability.
+- Motion is limited to slow, small-amplitude floating on desktop and must respect `prefers-reduced-motion`.
+- Do not extend this treatment into full-page glassmorphism, decorative 3D headings, or heavy animated backgrounds.
