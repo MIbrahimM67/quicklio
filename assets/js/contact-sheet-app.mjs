@@ -2,7 +2,22 @@ import{PAPER,contactSheetPlan,fitRect}from"/assets/js/print-layout-core.mjs";
 const $=s=>document.querySelector(s);let files=[],images=[],outUrl=null;
 function msg(t,err=false){$("#status").textContent=t;$("#status").className="notice "+(err?"error":"");}
 $("#drop").addEventListener("click",()=>$("#fileInput").click());$("#drop").addEventListener("dragover",e=>e.preventDefault());$("#drop").addEventListener("drop",e=>{e.preventDefault();select([...e.dataTransfer.files])});$("#fileInput").addEventListener("change",e=>select([...e.target.files]));
-async function select(list){files=list.filter(f=>f.type.startsWith("image/"));images=[];for(const f of files){const u=URL.createObjectURL(f),im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=u});images.push({file:f,img:im,url:u});}$("#fileCount").textContent=files.length+" image"+(files.length===1?"":"s")+" selected";renderPreview();msg(files.length?"Images ready.":"Choose images.",!files.length);}
+async function select(list){files=list.filter(f=>f.type.startsWith("image/"));images=[];for(const f of files){const u=URL.createObjectURL(f),im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=u});images.push({file:f,img:im,url:u});}$("#fileCount").textContent=files.length+" image"+(files.length===1?"":"s")+" selected";renderOrder();renderPreview();msg(files.length?"Images ready. Drag thumbnails to change their PDF order.":"Choose images.",!files.length);}
+function renderOrder(){
+  const root=$("#orderList");if(!root)return;root.innerHTML="";$("#orderWrap").hidden=!images.length;
+  images.forEach((obj,index)=>{
+    const item=document.createElement("button");item.type="button";item.className="reorder-thumb";item.draggable=true;item.dataset.index=String(index);item.setAttribute("aria-label","Photo "+(index+1)+": "+obj.file.name);
+    const img=document.createElement("img");img.src=obj.url;img.alt="";
+    const meta=document.createElement("span");meta.innerHTML="<strong>"+(index+1)+"</strong><small></small>";meta.querySelector("small").textContent=obj.file.name;
+    item.append(img,meta);
+    item.addEventListener("dragstart",e=>{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(index));item.classList.add("is-dragging");});
+    item.addEventListener("dragend",()=>item.classList.remove("is-dragging"));
+    item.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";item.classList.add("is-drop-target");});
+    item.addEventListener("dragleave",()=>item.classList.remove("is-drop-target"));
+    item.addEventListener("drop",e=>{e.preventDefault();item.classList.remove("is-drop-target");const from=Number(e.dataTransfer.getData("text/plain")),to=Number(item.dataset.index);if(Number.isInteger(from)&&Number.isInteger(to)&&from!==to){const[moved]=images.splice(from,1);images.splice(to,0,moved);files=images.map(x=>x.file);renderOrder();renderPreview();msg("Photo order updated.");}});
+    root.append(item);
+  });
+}
 function paper(){const p=PAPER[$("#paper").value];return $("#orientation").value==="landscape"?{width:p.height,height:p.width,label:p.label+" landscape"}:p;}
 function grid(){if($("#grid").value==="custom")return{cols:Number($("#cols").value),rows:Number($("#rows").value)};const[a,b]=$("#grid").value.split("x").map(Number);return{cols:a,rows:b};}
 function toggleCustom(){$("#customGrid").hidden=$("#grid").value!=="custom";renderPreview();}
