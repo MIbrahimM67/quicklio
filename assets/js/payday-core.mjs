@@ -4,7 +4,15 @@ export function generatePaydays(nextPayday,frequency,horizonEnd){
   const gap={weekly:7,biweekly:14,monthly:0}[frequency];
   if(gap===undefined)throw Error("Unsupported pay frequency.");
   const out=[];let d=new Date(nextPayday+"T12:00:00"),end=new Date(horizonEnd+"T12:00:00");
-  while(d<=end){out.push(iso(d));if(gap)d.setDate(d.getDate()+gap);else d.setMonth(d.getMonth()+1);}
+  const monthlyDay=d.getDate();
+  while(d<=end){
+    out.push(iso(d));
+    if(gap)d.setDate(d.getDate()+gap);
+    else{
+      const y=d.getFullYear(),m=d.getMonth()+1,last=new Date(y,m+1,0,12).getDate();
+      d=new Date(y,m,Math.min(monthlyDay,last),12);
+    }
+  }
   return out;
 }
 export function monthlyBillDates(startDate,endDate,day){
