@@ -42,11 +42,15 @@ for(const button of filters){
   });
 }
 search?.addEventListener('input',applyToolFilter);
-search?.addEventListener('keydown',(event)=>{
-  if(event.key!=='Enter')return;
+const openFirstMatch=()=>{
   const first=cards.find(card=>!card.hidden);
   if(first?.href)location.href=first.href;
+};
+search?.addEventListener('keydown',(event)=>{
+  if(event.key!=='Enter')return;
+  openFirstMatch();
 });
+document.querySelector('.tool-search button')?.addEventListener('click',openFirstMatch);
 applyToolFilter();
 
 for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
