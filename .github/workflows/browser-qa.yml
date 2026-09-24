@@ -1,5 +1,13 @@
 name: Browser QA
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'qa/**'
+      - 'playwright.config.mjs'
+      - '.github/workflows/browser-qa.yml'
+      - 'en/**'
+      - 'assets/**'
   workflow_dispatch:
 
 jobs:
