@@ -16,7 +16,15 @@ const routes=[
   '/en/pdf/resize-shipping-label-to-4x6/',
   '/en/images/dpi-print-size-calculator/',
   '/en/images/online-image-editor/',
-  '/en/pdf/online-pdf-editor/'
+  '/en/pdf/online-pdf-editor/',
+  '/en/pdf/merge-pdf/',
+  '/en/pdf/split-pdf/',
+  '/en/pdf/compress-pdf/',
+  '/en/pdf/pdf-to-jpg/',
+  '/en/pdf/image-to-pdf/',
+  '/en/pdf/add-watermark-to-pdf/',
+  '/en/pdf/add-page-numbers-to-pdf/',
+  '/en/pdf/crop-pdf/'
 ];
 
 const svg=(w=800,h=600,accent='#348f18')=>Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -265,4 +273,98 @@ test('online PDF editor annotates reorders and exports',async({page})=>{
   await page.locator('#exportBtn').click();
   await download;
   await expect(page.locator('#status')).toContainText('Edited PDF exported',{timeout:15000});
+});
+
+
+test('merge PDF combines two fixtures',async({page})=>{
+  const a=await PDFDocument.create();a.addPage([300,400]).drawText('A');
+  const b=await PDFDocument.create();b.addPage([300,400]).drawText('B');
+  await page.goto('/en/pdf/merge-pdf/');
+  await page.locator('#pdfInput').setInputFiles([
+    {name:'a.pdf',mimeType:'application/pdf',buffer:Buffer.from(await a.save())},
+    {name:'b.pdf',mimeType:'application/pdf',buffer:Buffer.from(await b.save())}
+  ]);
+  await expect(page.locator('.merge-file-row')).toHaveCount(2);
+  const download=page.waitForEvent('download');
+  await page.locator('#mergeBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Merged PDF downloaded');
+});
+
+test('split PDF extracts selected pages',async({page})=>{
+  const d=await PDFDocument.create();for(let i=0;i<3;i++)d.addPage([300,400]).drawText('P'+(i+1));
+  await page.goto('/en/pdf/split-pdf/');
+  await page.locator('#pdfInput').setInputFiles({name:'three.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#range').fill('1-2');
+  const download=page.waitForEvent('download');
+  await page.locator('#processBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('2 pages downloaded');
+});
+
+test('watermark PDF produces output',async({page})=>{
+  const d=await PDFDocument.create();d.addPage([400,500]).drawText('Source');
+  await page.goto('/en/pdf/add-watermark-to-pdf/');
+  await page.locator('#pdfInput').setInputFiles({name:'source.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#watermarkText').fill('DRAFT');
+  const download=page.waitForEvent('download');
+  await page.locator('#processBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Watermarked PDF downloaded');
+});
+
+test('page numbers PDF produces output',async({page})=>{
+  const d=await PDFDocument.create();d.addPage([400,500]);d.addPage([400,500]);
+  await page.goto('/en/pdf/add-page-numbers-to-pdf/');
+  await page.locator('#pdfInput').setInputFiles({name:'numbers.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#prefix').fill('Page ');
+  const download=page.waitForEvent('download');
+  await page.locator('#processBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Numbered PDF downloaded');
+});
+
+test('compress PDF creates preview and download',async({page})=>{
+  const d=await PDFDocument.create();const p=d.addPage([432,648]);p.drawText('Compression fixture',{x:50,y:500,size:30});p.drawRectangle({x:40,y:200,width:350,height:200,color:rgb(.3,.6,.8)});
+  await page.goto('/en/pdf/compress-pdf/');
+  await page.locator('#pdfInput').setInputFiles({name:'compress.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#quality').selectOption('small');
+  await page.locator('#compressBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#resultMeta')).toContainText('MB');
+  await expect(page.locator('#status')).toContainText('Compressed PDF ready');
+});
+
+test('PDF to JPG renders all pages',async({page})=>{
+  const d=await PDFDocument.create();d.addPage([300,400]).drawText('One');d.addPage([300,400]).drawText('Two');
+  await page.goto('/en/pdf/pdf-to-jpg/');
+  await page.locator('#pdfInput').setInputFiles({name:'pages.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#convertBtn').click();
+  await expect(page.locator('.batch-card')).toHaveCount(2,{timeout:15000});
+  await expect(page.locator('#downloadZip')).toBeEnabled();
+});
+
+test('images to PDF respects image batch and downloads',async({page})=>{
+  await page.goto('/en/pdf/image-to-pdf/');
+  await page.locator('#fileInput').setInputFiles([
+    {name:'a.svg',mimeType:'image/svg+xml',buffer:svg(800,600,'#348f18')},
+    {name:'b.svg',mimeType:'image/svg+xml',buffer:svg(600,800,'#315dd8')}
+  ]);
+  await expect(page.locator('.reorder-thumb')).toHaveCount(2);
+  const download=page.waitForEvent('download');
+  await page.locator('#buildBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('PDF downloaded');
+});
+
+test('crop PDF downloads cropped pages',async({page})=>{
+  const d=await PDFDocument.create();d.addPage([612,792]).drawText('Crop me',{x:80,y:600,size:24});
+  await page.goto('/en/pdf/crop-pdf/');
+  await page.locator('#pdfInput').setInputFiles({name:'crop.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#left').fill('10');
+  await page.locator('#right').fill('10');
+  const download=page.waitForEvent('download');
+  await page.locator('#processBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Cropped PDF downloaded');
 });
