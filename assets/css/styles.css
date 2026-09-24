@@ -337,3 +337,5 @@ textarea{min-height:8rem;resize:vertical}
 }
 
 .result-panel:has(#processedWrap:not([hidden]))>.placeholder{display:none}
+
+.tool-card[href*="pumpkin-stencil-maker"]{background:var(--color-pumpkin)}
