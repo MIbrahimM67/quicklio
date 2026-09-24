@@ -31,6 +31,7 @@ function render() {
       $('#method').textContent = `Approx. ${r.turns} spiral wraps around a constant-diameter trunk or column.`;
     }
     $('#error').textContent = '';
+    $('#error').hidden = true;
     $('#results').hidden = false;
     $('#requiredLength').textContent = formatFeet(r.bufferedLength);
     $('#strands').textContent = r.strands.toLocaleString();
@@ -39,6 +40,7 @@ function render() {
     $('#spareLength').textContent = formatFeet(r.spareLength);
   } catch (e) {
     $('#results').hidden = true;
+    $('#error').hidden = false;
     $('#error').textContent = e.message;
   }
 }
