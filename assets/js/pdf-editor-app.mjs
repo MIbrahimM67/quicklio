@@ -1,7 +1,15 @@
 import * as pdfjsLib from"https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.min.mjs";
 import{Canvas,FabricImage,Textbox,Rect,PencilBrush}from"https://cdn.jsdelivr.net/npm/fabric@7.4.0/dist/index.min.mjs";
 import{movePage}from"/assets/js/pdf-editor-core.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.worker.min.mjs";
+function installMapCompat(){
+  for(const Ctor of[Map,WeakMap]){
+    if(!Ctor.prototype.getOrInsertComputed)Object.defineProperty(Ctor.prototype,"getOrInsertComputed",{configurable:true,writable:true,value:function(key,callback){if(this.has(key))return this.get(key);const value=callback(key);this.set(key,value);return value;}});
+    if(!Ctor.prototype.getOrInsert)Object.defineProperty(Ctor.prototype,"getOrInsert",{configurable:true,writable:true,value:function(key,value){if(this.has(key))return this.get(key);this.set(key,value);return value;}});
+  }
+}
+installMapCompat();
+const workerCompat=`for(const Ctor of[Map,WeakMap]){if(!Ctor.prototype.getOrInsertComputed)Object.defineProperty(Ctor.prototype,"getOrInsertComputed",{configurable:true,writable:true,value:function(key,callback){if(this.has(key))return this.get(key);const value=callback(key);this.set(key,value);return value;}});if(!Ctor.prototype.getOrInsert)Object.defineProperty(Ctor.prototype,"getOrInsert",{configurable:true,writable:true,value:function(key,value){if(this.has(key))return this.get(key);this.set(key,value);return value;}});}await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.worker.min.mjs");`;
+pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([workerCompat],{type:"text/javascript"}));
 const $=s=>document.querySelector(s);
 const canvas=new Canvas("pdfEditorCanvas",{backgroundColor:"#fff",preserveObjectStacking:true,selection:true});
 let file=null,sourceBytes=null,pdfDoc=null,pages=[],current=0,suspend=false,loadingPage=false;
