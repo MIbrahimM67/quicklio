@@ -14,7 +14,9 @@ const routes=[
   '/en/labels/barcode-label-sheet-generator/',
   '/en/images/photo-contact-sheet-maker/',
   '/en/pdf/resize-shipping-label-to-4x6/',
-  '/en/images/dpi-print-size-calculator/'
+  '/en/images/dpi-print-size-calculator/',
+  '/en/images/online-image-editor/',
+  '/en/pdf/online-pdf-editor/'
 ];
 
 const svg=(w=800,h=600,accent='#348f18')=>Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -217,4 +219,50 @@ test('DPI calculator returns 300 DPI for 6000px at 20in',async({page})=>{
   await page.locator('#printHeight').fill('13.333333');
   await expect(page.locator('#primaryValue')).toContainText('300 DPI');
   await expect(page.locator('#quality')).toContainText('High-quality photo');
+});
+
+
+test('contact sheet drag reorder changes thumbnail order',async({page})=>{
+  await page.goto('/en/images/photo-contact-sheet-maker/');
+  await page.locator('#fileInput').setInputFiles([
+    {name:'first.svg',mimeType:'image/svg+xml',buffer:svg(800,600,'#348f18')},
+    {name:'second.svg',mimeType:'image/svg+xml',buffer:svg(600,800,'#315dd8')},
+    {name:'third.svg',mimeType:'image/svg+xml',buffer:svg(700,700,'#cc6b3e')}
+  ]);
+  await expect(page.locator('.reorder-thumb')).toHaveCount(3);
+  await expect(page.locator('.reorder-thumb').nth(0)).toHaveAttribute('aria-label',/first\.svg/);
+  await page.locator('.reorder-thumb').nth(0).dragTo(page.locator('.reorder-thumb').nth(2));
+  await expect(page.locator('.reorder-thumb').nth(2)).toHaveAttribute('aria-label',/first\.svg/);
+  await expect(page.locator('#status')).toContainText('Photo order updated');
+});
+
+test('online image editor adds text and exports',async({page})=>{
+  await page.goto('/en/images/online-image-editor/');
+  await page.locator('#fileInput').setInputFiles({name:'edit.svg',mimeType:'image/svg+xml',buffer:svg(900,700,'#315dd8')});
+  await expect(page.locator('#workspace')).toBeVisible();
+  await page.locator('#textValue').fill('Quicklio');
+  await page.locator('#addTextBtn').click();
+  await expect(page.locator('#canvasMeta')).toContainText('900 × 700');
+  const download=page.waitForEvent('download');
+  await page.locator('#downloadBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Image exported');
+});
+
+test('online PDF editor annotates reorders and exports',async({page})=>{
+  const doc=await PDFDocument.create();
+  for(let i=1;i<=3;i++){const p=doc.addPage([432,648]);p.drawText('Page '+i,{x:150,y:320,size:28});}
+  const pdf=Buffer.from(await doc.save());
+  await page.goto('/en/pdf/online-pdf-editor/');
+  await page.locator('#pdfInput').setInputFiles({name:'editor.pdf',mimeType:'application/pdf',buffer:pdf});
+  await expect(page.locator('.pdf-page-thumb')).toHaveCount(3,{timeout:15000});
+  await page.locator('#textValue').fill('Approved');
+  await page.locator('#addTextBtn').click();
+  await expect(page.locator('.pdf-page-thumb').nth(0)).toContainText('Edited');
+  await page.locator('.pdf-page-thumb').nth(2).dragTo(page.locator('.pdf-page-thumb').nth(0));
+  await expect(page.locator('#status')).toContainText('Page order updated');
+  const download=page.waitForEvent('download');
+  await page.locator('#exportBtn').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Edited PDF exported',{timeout:15000});
 });
