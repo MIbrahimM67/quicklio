@@ -1,0 +1,15 @@
+{
+  "scanned_at": "2026-09-24",
+  "project": "Quicklio",
+  "framework": "vanilla HTML/CSS/JavaScript",
+  "fonts": "system sans stack in shared stylesheet",
+  "palette": "warm paper + near-black + acid-lime custom properties",
+  "motion": "no motion library; CSS-only restrained transitions",
+  "spacing": "shared CSS, redesigned to named 4-point-derived tokens",
+  "preserved": [
+    "brand accent",
+    "browser-only tool behavior",
+    "existing routes",
+    "tool logic and DOM IDs"
+  ]
+}
