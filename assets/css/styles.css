@@ -473,3 +473,55 @@ textarea{min-height:8rem;resize:vertical}
 .reorder-thumb small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-muted);font-size:.66rem}
 .reorder-thumb.is-dragging{opacity:.45;transform:scale(.97)}
 .reorder-thumb.is-drop-target{border-color:var(--color-green);box-shadow:0 0 0 3px oklch(62% .16 132/.12)}
+
+/* editor workspaces */
+.editor-shell{display:grid;gap:.85rem;margin-top:.9rem;margin-bottom:2.5rem}
+.editor-toolbar{padding:.75rem}
+.editor-file-row,.editor-tool-row{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.editor-file-row{padding-bottom:.65rem;border-bottom:1px solid var(--color-rule)}
+.editor-tool-row{padding-top:.65rem}
+.editor-toolbar-spacer{flex:1 1 auto}
+.editor-meta{font-family:var(--font-mono);font-size:.7rem;color:var(--color-muted)}
+.icon-button,.tool-button{min-height:2.45rem;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--color-rule);border-radius:.65rem;background:var(--color-surface);color:var(--color-ink);font-size:.75rem;font-weight:800;cursor:pointer}
+.icon-button{width:2.45rem;padding:0}
+.tool-button{padding-inline:.68rem}
+.tool-button:hover,.icon-button:hover,.tool-button.is-active{border-color:var(--color-rule-strong);background:var(--color-green-soft)}
+.danger-ghost{color:oklch(48% .18 28)}
+.editor-workspace{display:grid;grid-template-columns:minmax(14rem,17rem) minmax(0,1fr);gap:.85rem;align-items:start}
+.editor-sidebar{padding:.85rem;position:sticky;top:5.4rem;max-height:calc(100vh - 6.4rem);overflow:auto}
+.editor-control-group{padding:.8rem 0;border-bottom:1px solid var(--color-rule)}
+.editor-control-group:first-child{padding-top:0}.editor-control-group:last-child{border-bottom:0;padding-bottom:0}
+.editor-control-group h2,.pdf-editor-settings h2{margin:0 0 .65rem;font-size:.82rem}
+.form-grid.compact{gap:.55rem}.form-grid.compact .field{gap:.28rem}
+.editor-canvas-panel{min-width:0;padding:.8rem}
+.editor-stage{--editor-ratio:4/3;display:grid;place-items:center;min-height:32rem;padding:1rem;overflow:auto;border:1px solid var(--color-rule);border-radius:.9rem;background:oklch(89% .01 100)}
+.editor-stage .canvas-container{max-width:100%;box-shadow:0 16px 35px oklch(20% .01 100/.15)}
+.editor-stage canvas{max-width:none}
+.pdf-editor-workspace{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:.85rem;align-items:start}
+.pdf-pages-panel{padding:.7rem;position:sticky;top:5.4rem;max-height:calc(100vh - 6.4rem);overflow:hidden}
+.pdf-page-list{display:grid;gap:.55rem;max-height:calc(100vh - 12rem);overflow:auto;padding-right:.2rem}
+.pdf-page-thumb{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:.55rem;align-items:center;width:100%;padding:.45rem;border:1px solid var(--color-rule);border-radius:.7rem;background:var(--color-surface);cursor:grab;text-align:left}
+.pdf-page-thumb img{display:block;width:3rem;height:4rem;object-fit:contain;background:white;border:1px solid var(--color-rule)}
+.pdf-page-thumb span{display:grid;gap:.15rem;min-width:0}.pdf-page-thumb strong{font-size:.78rem}.pdf-page-thumb small{font-size:.65rem;color:var(--color-muted)}
+.pdf-page-thumb.is-active{border-color:var(--color-green);box-shadow:0 0 0 2px oklch(62% .16 132/.12)}
+.pdf-page-thumb.is-dragging{opacity:.45}.pdf-page-thumb.is-drop-target{border-color:var(--color-green)}
+.pdf-editor-settings{padding:.15rem 0 .8rem}
+.pdf-editor-stage{min-height:42rem}
+.editor-note{margin-bottom:0}
+.editor-page input[type="color"]{min-height:2.7rem;padding:.25rem}
+@media(max-width:60rem){
+  .editor-workspace{grid-template-columns:1fr}
+  .editor-sidebar{position:static;max-height:none}
+  .pdf-editor-workspace{grid-template-columns:1fr}
+  .pdf-pages-panel{position:static;max-height:none}
+  .pdf-page-list{display:flex;overflow-x:auto;max-height:none;padding-bottom:.35rem}
+  .pdf-page-thumb{width:7rem;flex:0 0 7rem;grid-template-columns:1fr}
+  .pdf-page-thumb img{width:100%;height:6rem}
+  .pdf-editor-stage,.editor-stage{min-height:26rem}
+}
+@media(max-width:38rem){
+  .editor-file-row,.editor-tool-row{gap:.35rem}
+  .tool-button{padding-inline:.52rem;font-size:.7rem}
+  .editor-canvas-panel,.editor-toolbar{padding:.55rem}
+  .editor-stage{padding:.5rem}
+}
