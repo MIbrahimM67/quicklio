@@ -1,0 +1,18 @@
+{
+  "runs": [
+    {
+      "date": "2026-09-24",
+      "scope": "app",
+      "verb": "redesign",
+      "branch": "hallmark-redesign",
+      "genre": "modern-minimal utility",
+      "theme": "custom Quicklio warm-paper / acid-lime",
+      "macrostructures": {
+        "marketing": "Index-First",
+        "app": "Workbench",
+        "content": "Long Document"
+      },
+      "note": "Presentation-only redesign. Existing tool JavaScript and calculations intentionally untouched."
+    }
+  ]
+}
