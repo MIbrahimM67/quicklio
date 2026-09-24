@@ -1,0 +1,12 @@
+import{grayscale,sobel,thresholdEdges,thickenBinary,rgbaFromBinary}from"/assets/js/line-art-core.mjs";
+const $=s=>document.querySelector(s);let img=null,file=null;
+function msg(t,err=false){$("#status").textContent=t;$("#status").className="notice "+(err?"error":"");}
+$("#drop").addEventListener("click",()=>$("#fileInput").click());
+$("#drop").addEventListener("dragover",e=>e.preventDefault());
+$("#drop").addEventListener("drop",e=>{e.preventDefault();load(e.dataTransfer.files[0])});
+$("#fileInput").addEventListener("change",e=>load(e.target.files[0]));
+function load(f){if(!f||!f.type.startsWith("image/"))return msg("Choose an image.",true);file=f;const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{img=im;$("#originalPreview").src=u;render();};im.onerror=()=>msg("Could not read this image.",true);im.src=u;}
+["threshold","thickness","blur","invert"].forEach(id=>$("#"+id).addEventListener("input",()=>img&&render()));
+function render(){try{const max=1000,scale=Math.min(1,max/img.naturalWidth,max/img.naturalHeight),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),work=document.createElement("canvas");work.width=w;work.height=h;const ctx=work.getContext("2d",{willReadFrequently:true});ctx.filter="grayscale(100%) blur("+$("#blur").value+"px)";ctx.drawImage(img,0,0,w,h);ctx.filter="none";const rgba=ctx.getImageData(0,0,w,h).data,g=grayscale(rgba),edges=sobel(g,w,h),binary=thresholdEdges(edges,$("#threshold").value,$("#invert").checked),thick=thickenBinary(binary,w,h,$("#thickness").value),out=rgbaFromBinary(thick);const c=$("#resultCanvas");c.width=w;c.height=h;c.getContext("2d").putImageData(new ImageData(out,w,h),0,0);$("#thresholdOut").textContent=$("#threshold").value;$("#thicknessOut").textContent=$("#thickness").value;$("#blurOut").textContent=$("#blur").value+"px";$("#previews").hidden=false;msg("Preview ready · "+w+" × "+h);}catch(e){msg(e.message,true)}}
+$("#downloadBtn").addEventListener("click",()=>{const c=$("#resultCanvas");if(!c.width)return;const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download=(file?.name.replace(/\.[^.]+$/,"")||"photo")+"-line-art.png";a.click();});
+$("#printBtn").addEventListener("click",()=>{const c=$("#resultCanvas");if(!c.width)return;const w=window.open("","_blank","noopener,noreferrer");w.document.write('<img src="'+c.toDataURL("image/png")+'" style="max-width:100%;height:auto"><script>setTimeout(()=>print(),200)<\/script>');w.document.close();});
