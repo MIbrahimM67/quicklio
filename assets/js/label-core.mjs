@@ -2,7 +2,7 @@ import{inToPt,mmToPt,PAPER}from"./print-layout-core.mjs";
 export const LABEL_PRESETS={
   avery5160:{label:"Avery 5160 · 30-up",paper:"letter",cols:3,rows:10,labelW:inToPt(2.625),labelH:inToPt(1),marginX:inToPt(.1875),marginY:inToPt(.5),gapX:inToPt(.125),gapY:0},
   avery5163:{label:"Avery 5163 · 10-up",paper:"letter",cols:2,rows:5,labelW:inToPt(4),labelH:inToPt(2),marginX:inToPt(.15625),marginY:inToPt(.5),gapX:inToPt(.1875),gapY:0},
-  a4_21:{label:"A4 · 21 labels",paper:"a4",cols:3,rows:7,labelW:mmToPt(63.5),labelH:mmToPt(38.1),marginX:mmToPt(7.25),marginY:mmToPt(15.15),gapX:mmToPt(2.5),gapY:0,
+  a4_21:{label:"A4 · 21 labels",paper:"a4",cols:3,rows:7,labelW:mmToPt(63.5),labelH:mmToPt(38.1),marginX:mmToPt(7.25),marginY:mmToPt(15.15),gapX:mmToPt(2.5),gapY:0},
   thermal4x6:{label:"Thermal · 4 × 6 in",paper:"photo4x6",cols:1,rows:1,labelW:inToPt(4),labelH:inToPt(6),marginX:0,marginY:0,gapX:0,gapY:0}
 };
 export function parseCSV(text){
