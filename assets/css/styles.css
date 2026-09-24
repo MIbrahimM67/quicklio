@@ -525,3 +525,12 @@ textarea{min-height:8rem;resize:vertical}
   .editor-canvas-panel,.editor-toolbar{padding:.55rem}
   .editor-stage{padding:.5rem}
 }
+
+.merge-file-list{display:grid;gap:.55rem;margin-block:.8rem}
+.merge-file-row{display:grid;grid-template-columns:2rem minmax(0,1fr) auto 2rem;gap:.6rem;align-items:center;width:100%;padding:.65rem;border:1px solid var(--color-rule);border-radius:.72rem;background:var(--color-surface);text-align:left;cursor:grab}
+.merge-file-row strong{display:grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:.45rem;background:var(--color-green-soft);color:var(--color-green);font-size:.7rem}
+.merge-file-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}
+.merge-file-row small{color:var(--color-muted)}
+.merge-file-row b{display:grid;place-items:center;width:1.8rem;height:1.8rem;border-radius:.45rem;color:oklch(48% .18 28);font-size:1rem}
+.merge-file-row.is-dragging{opacity:.45}.merge-file-row.is-drop-target{border-color:var(--color-green);box-shadow:0 0 0 2px oklch(62% .16 132/.12)}
+@media(max-width:38rem){.merge-file-row{grid-template-columns:2rem minmax(0,1fr) 2rem}.merge-file-row small{grid-column:2}}
