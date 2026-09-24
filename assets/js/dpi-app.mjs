@@ -1,0 +1,8 @@
+import{calculateDpi,maxPrintSize,dpiLabel}from"/assets/js/dpi-core.mjs";
+const $=s=>document.querySelector(s);
+function toggle(){$("#printMode").hidden=$("#mode").value!=="dpi";$("#maxMode").hidden=$("#mode").value!=="size";render();}
+$("#mode").addEventListener("change",toggle);toggle();
+$("#imageInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{$("#pxWidth").value=im.naturalWidth;$("#pxHeight").value=im.naturalHeight;URL.revokeObjectURL(u);render();};im.src=u;});
+["pxWidth","pxHeight","printWidth","printHeight","printUnit","targetDpi"].forEach(id=>$("#"+id).addEventListener("input",render));
+function render(){try{const pw=Number($("#pxWidth").value),ph=Number($("#pxHeight").value);if($("#mode").value==="dpi"){let w=Number($("#printWidth").value),h=Number($("#printHeight").value);if($("#printUnit").value==="cm"){w/=2.54;h/=2.54;}const r=calculateDpi(pw,ph,w,h);$("#primaryValue").textContent=Math.round(r.effectiveDpi)+" DPI";$("#quality").textContent=dpiLabel(r.effectiveDpi);$("#secondary").textContent=Math.round(r.dpiX)+" × "+Math.round(r.dpiY)+" DPI by axis";}else{const r=maxPrintSize(pw,ph,$("#targetDpi").value);$("#primaryValue").textContent=r.widthIn.toFixed(1)+" × "+r.heightIn.toFixed(1)+" in";$("#quality").textContent=r.widthCm.toFixed(1)+" × "+r.heightCm.toFixed(1)+" cm";$("#secondary").textContent="at "+$("#targetDpi").value+" DPI";}$("#results").hidden=false;$("#status").textContent="Calculation updated.";$("#status").className="notice";}catch(e){$("#results").hidden=true;$("#status").textContent=e.message;$("#status").className="notice error";}}
+render();
