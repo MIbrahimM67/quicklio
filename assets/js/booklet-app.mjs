@@ -1,0 +1,15 @@
+import{signaturePlans,paperPoints}from"/assets/js/booklet-core.mjs";
+const $=s=>document.querySelector(s);let file=null,bytes=null,pageCount=0,outUrl=null;
+function msg(t,err=false){$("#status").textContent=t;$("#status").className="notice "+(err?"error":"");}
+$("#drop").addEventListener("click",()=>$("#pdfInput").click());
+$("#drop").addEventListener("dragover",e=>e.preventDefault());
+$("#drop").addEventListener("drop",e=>{e.preventDefault();load(e.dataTransfer.files[0])});
+$("#pdfInput").addEventListener("change",e=>load(e.target.files[0]));
+async function load(f){if(!f||!f.name.toLowerCase().endsWith(".pdf"))return msg("Choose a PDF file.",true);try{file=f;bytes=new Uint8Array(await f.arrayBuffer());const doc=await PDFLib.PDFDocument.load(bytes);pageCount=doc.getPageCount();$("#fileName").textContent=f.name;$("#fileMeta").textContent=pageCount+" pages · "+(f.size/1024/1024).toFixed(2)+" MB";$("#settings").hidden=false;msg("PDF ready.");summarize();}catch(e){msg("Could not read this PDF: "+e.message,true)}}
+function summarize(){if(!pageCount)return;try{const plans=signaturePlans(pageCount,$("#signatureSize").value),sheets=plans.reduce((n,p)=>n+p.sheets.length,0),blanks=plans.reduce((n,p)=>n+(p.paddedPages-(p.endActual-p.start+1)),0);$("#planMeta").textContent=plans.length+" signature"+(plans.length===1?"":"s")+" · "+sheets+" sheet"+(sheets===1?"":"s")+" · "+blanks+" blank page"+(blanks===1?"":"s")+" added";}catch(e){$("#planMeta").textContent=e.message;}}
+$("#signatureSize").addEventListener("change",summarize);
+async function build(){const src=await PDFLib.PDFDocument.load(bytes),out=await PDFLib.PDFDocument.create(),embedded=await out.embedPages(src.getPages()),plans=signaturePlans(pageCount,$("#signatureSize").value),paper=paperPoints($("#paper").value),gap=Number($("#gap").value)*72/25.4,half=(paper.width-gap)/2;
+function drawSide(pair){const page=out.addPage([paper.width,paper.height]);pair.forEach((num,slot)=>{if(!num)return;const em=embedded[num-1],scale=Math.min((half-18)/em.width,(paper.height-18)/em.height),w=em.width*scale,h=em.height*scale,x=slot===0?(half-w)/2:half+gap+(half-w)/2,y=(paper.height-h)/2;page.drawPage(em,{x,y,xScale:scale,yScale:scale});});}
+for(const plan of plans)for(const sheet of plan.sheets){drawSide(sheet.front);drawSide(sheet.back);}out.setProducer("Quicklio — PDF Booklet Signature Maker");return out.save();}
+$("#buildBtn").addEventListener("click",async()=>{if(!bytes)return msg("Upload a PDF first.",true);try{msg("Building booklet PDF…");const out=await build();if(outUrl)URL.revokeObjectURL(outUrl);outUrl=URL.createObjectURL(new Blob([out],{type:"application/pdf"}));$("#preview").src=outUrl+"#toolbar=0";$("#downloadBtn").disabled=false;msg("Booklet PDF ready. Print duplex using short-edge flip unless your printer requires the opposite orientation.");}catch(e){msg(e.message,true)}});
+$("#downloadBtn").addEventListener("click",()=>{if(!outUrl)return;const a=document.createElement("a");a.href=outUrl;a.download=(file?.name.replace(/\.pdf$/i,"")||"document")+"-booklet.pdf";a.click();});
