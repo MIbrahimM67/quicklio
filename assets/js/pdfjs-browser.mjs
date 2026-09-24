@@ -1,0 +1,6 @@
+import * as pdfjsLib from"https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.min.mjs";
+function install(){for(const Ctor of[Map,WeakMap]){if(!Ctor.prototype.getOrInsertComputed)Object.defineProperty(Ctor.prototype,"getOrInsertComputed",{configurable:true,writable:true,value:function(key,callback){if(this.has(key))return this.get(key);const value=callback(key);this.set(key,value);return value;}});if(!Ctor.prototype.getOrInsert)Object.defineProperty(Ctor.prototype,"getOrInsert",{configurable:true,writable:true,value:function(key,value){if(this.has(key))return this.get(key);this.set(key,value);return value;}});}}
+install();
+const worker=`for(const Ctor of[Map,WeakMap]){if(!Ctor.prototype.getOrInsertComputed)Object.defineProperty(Ctor.prototype,"getOrInsertComputed",{configurable:true,writable:true,value:function(key,callback){if(this.has(key))return this.get(key);const value=callback(key);this.set(key,value);return value;}});if(!Ctor.prototype.getOrInsert)Object.defineProperty(Ctor.prototype,"getOrInsert",{configurable:true,writable:true,value:function(key,value){if(this.has(key))return this.get(key);this.set(key,value);return value;}});}await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.worker.min.mjs");`;
+pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([worker],{type:"text/javascript"}));
+export{pdfjsLib};
