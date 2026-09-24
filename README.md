@@ -24,6 +24,9 @@ Static, browser-only tools site. No framework and no build step.
 - `/en/pdf/resize-shipping-label-to-4x6/`
 - `/en/images/dpi-print-size-calculator/`
 
+- `/en/images/online-image-editor/`
+- `/en/pdf/online-pdf-editor/`
+
 ## Run locally
 ```bash
 npm test
@@ -37,3 +40,6 @@ The Halloween candy calculator and payday planner can optionally store data in b
 
 ## Repository strategy
 Keep Quicklio as one repository while tools share the same domain, CSS, SEO structure, and deployment. Split a future tool only if it needs an independent backend/deployment.
+
+## Editors
+The browser editors use Fabric.js 7.4.0 for interactive canvas objects. The PDF editor additionally uses PDF.js 6.3.289 for page rendering and pdf-lib for PDF export. Untouched PDF pages are copied from the original file; edited or rotated pages are flattened for predictable output.
