@@ -368,3 +368,19 @@ test('crop PDF downloads cropped pages',async({page})=>{
   await download;
   await expect(page.locator('#status')).toContainText('Cropped PDF downloaded');
 });
+
+
+test('contact sheet drag reorder updates photo order',async({page})=>{
+  await page.goto('/en/images/photo-contact-sheet-maker/');
+  await page.locator('#fileInput').setInputFiles([
+    {name:'first.svg',mimeType:'image/svg+xml',buffer:svg(800,600,'#348f18')},
+    {name:'second.svg',mimeType:'image/svg+xml',buffer:svg(600,800,'#315dd8')},
+    {name:'third.svg',mimeType:'image/svg+xml',buffer:svg(700,700,'#cc6b3e')}
+  ]);
+  const thumbs=page.locator('.reorder-thumb');
+  await expect(thumbs).toHaveCount(3);
+  await expect(thumbs.nth(0)).toContainText('first.svg');
+  await thumbs.nth(0).dragTo(thumbs.nth(2));
+  await expect(page.locator('.reorder-thumb').nth(2)).toContainText('first.svg');
+  await expect(page.locator('#status')).toContainText('Photo order updated');
+});
