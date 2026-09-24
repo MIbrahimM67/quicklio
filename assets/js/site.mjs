@@ -15,7 +15,7 @@ document.addEventListener('pointerdown',(event)=>{
 const search=document.querySelector('[data-tool-search]');
 const cards=[...document.querySelectorAll('[data-tool-card]')];
 const filters=[...document.querySelectorAll('[data-tool-filter]')];
-const allowedFilters=new Set(['all','image','pdf','social','finance','crafts','candle','halloween','christmas']);
+const allowedFilters=new Set(['all','image','pdf','labels','social','finance','crafts','candle','halloween','christmas']);
 const requestedFilter=new URLSearchParams(location.search).get('category');
 let activeFilter=allowedFilters.has(requestedFilter)?requestedFilter:'all';
 
