@@ -7,7 +7,14 @@ const routes=[
   '/en/images/photo-to-line-drawing/',
   '/en/social/instagram-no-crop-image-resizer/',
   '/en/finance/payday-bills-planner/',
-  '/en/crafts/yarn-amount-calculator/'
+  '/en/crafts/yarn-amount-calculator/',
+  '/en/images/passport-photo-maker/',
+  '/en/print/split-image-for-printing/',
+  '/en/pdf/add-bleed-and-crop-marks/',
+  '/en/labels/barcode-label-sheet-generator/',
+  '/en/images/photo-contact-sheet-maker/',
+  '/en/pdf/resize-shipping-label-to-4x6/',
+  '/en/images/dpi-print-size-calculator/'
 ];
 
 const svg=(w=800,h=600,accent='#348f18')=>Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -128,4 +135,86 @@ test('PDF booklet maker builds an 8-page imposed PDF',async({page})=>{
   await expect(page.locator('#status')).toContainText('Booklet PDF ready');
   const src=await page.locator('#preview').getAttribute('src');
   expect(src).toMatch(/^blob:/);
+});
+
+
+test('passport photo maker renders 600px US photo and print sheet',async({page})=>{
+  await page.goto('/en/images/passport-photo-maker/');
+  await page.locator('#fileInput').setInputFiles({name:'portrait.svg',mimeType:'image/svg+xml',buffer:svg(900,1200,'#315dd8')});
+  await expect(page.locator('#digitalMeta')).toContainText('600 × 600');
+  const size=await page.locator('#resultCanvas').evaluate(c=>({w:c.width,h:c.height}));
+  expect(size).toEqual({w:600,h:600});
+  await expect(page.locator('#downloadSheet')).toBeEnabled();
+  const download=page.waitForEvent('download');
+  await page.locator('#downloadSheet').click();
+  await download;
+  await expect(page.locator('#status')).toContainText('Print sheet ready');
+});
+
+test('poster splitter builds tiled PDF',async({page})=>{
+  await page.goto('/en/print/split-image-for-printing/');
+  await page.locator('#fileInput').setInputFiles({name:'poster.svg',mimeType:'image/svg+xml',buffer:svg(1200,800,'#cc6b3e')});
+  await page.locator('#cols').fill('2');
+  await page.locator('#rows').fill('2');
+  await expect(page.locator('#planMeta')).toContainText('4 pages');
+  await page.locator('#buildBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#status')).toContainText('Poster PDF ready');
+  expect(await page.locator('#pdfPreview').getAttribute('src')).toMatch(/^blob:/);
+});
+
+test('bleed tool builds crop-mark PDF from source PDF',async({page})=>{
+  const doc=await PDFDocument.create();const p=doc.addPage([360,504]);p.drawRectangle({x:0,y:0,width:360,height:504,color:rgb(.95,.8,.3)});const pdf=Buffer.from(await doc.save());
+  await page.goto('/en/pdf/add-bleed-and-crop-marks/');
+  await page.locator('#fileInput').setInputFiles({name:'artwork.pdf',mimeType:'application/pdf',buffer:pdf});
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.locator('#buildBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#status')).toContainText('Print-ready PDF created');
+  expect(await page.locator('#preview').getAttribute('src')).toMatch(/^blob:/);
+});
+
+test('barcode label tool builds Code128 PDF from CSV',async({page})=>{
+  await page.goto('/en/labels/barcode-label-sheet-generator/');
+  await expect(page.locator('#recordCount')).toContainText('3 records');
+  await expect(page.locator('#buildBtn')).toBeEnabled();
+  await page.locator('#buildBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#status')).toContainText('Label sheet PDF ready');
+  expect(await page.locator('#pdfPreview').getAttribute('src')).toMatch(/^blob:/);
+});
+
+test('contact sheet builds PDF from three images',async({page})=>{
+  await page.goto('/en/images/photo-contact-sheet-maker/');
+  await page.locator('#fileInput').setInputFiles([
+    {name:'one.svg',mimeType:'image/svg+xml',buffer:svg(800,600,'#348f18')},
+    {name:'two.svg',mimeType:'image/svg+xml',buffer:svg(600,800,'#315dd8')},
+    {name:'three.svg',mimeType:'image/svg+xml',buffer:svg(700,700,'#cc6b3e')}
+  ]);
+  await expect(page.locator('#fileCount')).toContainText('3 images');
+  await page.locator('#buildBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#status')).toContainText('Contact sheet PDF ready');
+});
+
+test('shipping label tool converts source PDF to 4x6',async({page})=>{
+  const doc=await PDFDocument.create();const p=doc.addPage([612,792]);p.drawRectangle({x:20,y:420,width:572,height:340,color:rgb(.95,.95,.95)});p.drawText('SHIP TO',{x:60,y:700,size:30});const pdf=Buffer.from(await doc.save());
+  await page.goto('/en/pdf/resize-shipping-label-to-4x6/');
+  await page.locator('#pdfInput').setInputFiles({name:'label.pdf',mimeType:'application/pdf',buffer:pdf});
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.locator('#cropPreset').selectOption('top');
+  await page.locator('#buildBtn').click();
+  await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
+  await expect(page.locator('#status')).toContainText('4 × 6 PDF ready');
+  expect(await page.locator('#preview').getAttribute('src')).toMatch(/^blob:/);
+});
+
+test('DPI calculator returns 300 DPI for 6000px at 20in',async({page})=>{
+  await page.goto('/en/images/dpi-print-size-calculator/');
+  await page.locator('#pxWidth').fill('6000');
+  await page.locator('#pxHeight').fill('4000');
+  await page.locator('#printWidth').fill('20');
+  await page.locator('#printHeight').fill('13.333333');
+  await expect(page.locator('#primaryValue')).toContainText('300 DPI');
+  await expect(page.locator('#quality')).toContainText('High-quality photo');
 });
