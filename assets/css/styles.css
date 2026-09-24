@@ -597,3 +597,5 @@ textarea{min-height:8rem;resize:vertical}
 @media (prefers-reduced-motion:reduce){
   .scene-chip,.scene-object{animation:none!important}
 }
+
+/* hybrid-3d-qa-stamp */
