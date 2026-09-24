@@ -61,3 +61,13 @@ export function posterPlan({imageWidth,imageHeight,pageWidth,pageHeight,cols,row
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)tiles.push({row:r,col:c,x:c*(pageWidth-overlap),y:r*(pageHeight-overlap),width:pageWidth,height:pageHeight});
   return{posterWidth,posterHeight,image,tiles,pageCount:tiles.length};
 }
+
+export function posterPlanForSize({imageWidth,imageHeight,pageWidth,pageHeight,posterWidth,posterHeight,overlap=0}){
+  [posterWidth,posterHeight].forEach(v=>{if(!Number.isFinite(Number(v))||Number(v)<=0)throw Error("Final poster size must be greater than zero.")});
+  overlap=Number(overlap);if(!Number.isFinite(overlap)||overlap<0||overlap>=Math.min(pageWidth,pageHeight))throw Error("Overlap is too large.");
+  const stepX=pageWidth-overlap,stepY=pageHeight-overlap;
+  const cols=Math.max(1,Math.ceil((posterWidth-overlap)/stepX)),rows=Math.max(1,Math.ceil((posterHeight-overlap)/stepY));
+  const image=fitRect(imageWidth,imageHeight,posterWidth,posterHeight,"contain"),tiles=[];
+  for(let r=0;r<rows;r++)for(let col=0;col<cols;col++)tiles.push({row:r,col,x:col*stepX,y:r*stepY,width:pageWidth,height:pageHeight});
+  return{posterWidth,posterHeight,image,tiles,pageCount:tiles.length,cols,rows};
+}
