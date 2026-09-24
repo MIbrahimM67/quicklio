@@ -1,95 +1,55 @@
 # Design — Quicklio
 
-A locked Hallmark design system for Quicklio. Every page redesign reads this file first. Extend this system when needed; do not invent a new visual language per tool.
+Quicklio is a warm, practical browser-tools brand: approachable enough for everyday users, credible enough for file and calculation utilities, and recognizable across many categories.
 
-## Genre
-Modern-minimal utility, with an almanac/workbench character.
+## Brand position
+**Promise:** practical tools for real jobs, without unnecessary friction.
+**Voice:** clear, useful, friendly, never cute at the expense of clarity.
+**Tagline:** Simple tools. Real solutions.
 
-## Macrostructure family
-- Marketing/home: Index-First utility catalogue with a compact asymmetrical intro.
-- App/tool pages: Workbench. The function appears immediately; explanation follows.
-- Content pages: Long Document with restrained rules and wide negative space.
+## Visual language
+- Warm ivory page background rather than sterile white.
+- Quicklio green is the single brand anchor.
+- Tool categories get soft pastel surfaces, but the global brand stays green + ink.
+- Soft 12–22px radii are allowed because the brand reference explicitly calls for a friendly consumer-tool surface; avoid nested card-on-card excess.
+- Subtle shadows only on elevated navigation, hero containers, and working panels.
 
-## Theme
-Quicklio keeps its warm paper, near-black ink, and acid-lime accent. The palette is expressed as OKLCH tokens in `assets/css/styles.css`.
-
-- `--color-paper`: warm off-white page
-- `--color-paper-2`: slightly deeper working surface
-- `--color-surface`: bright input/work surface
-- `--color-ink`: near-black primary ink
-- `--color-ink-2`: secondary ink
-- `--color-muted`: metadata
-- `--color-rule`: quiet rule
-- `--color-accent`: Quicklio acid lime
-- `--color-accent-ink`: dark text on lime
-- `--color-focus`: high-contrast keyboard focus
+## Logo
+Use `/assets/brand/quicklio-mark.svg` with the Manrope wordmark. The mark combines a circular Q-like silhouette with a lightning cut to communicate speed and utility.
 
 ## Typography
-- Display: system sans, weight 780–900, roman.
-- Body: system sans, weight 400–650.
-- Mono: system monospace, used only for values/technical metadata where useful.
-- Display tracking: tight, never italic.
-- Type scale anchor: `--text-display` uses `clamp()`.
+- Display/marketing: Fraunces 700–900, roman only.
+- UI/body: Manrope 400–800.
+- Mono: system mono only when a technical value genuinely benefits.
+- Tool titles use Manrope rather than Fraunces so working pages remain utilitarian.
 
-No remote font dependency is required.
+## Color tokens
+Defined centrally in `assets/css/styles.css`.
+- Brand green: `--color-green`
+- Warm paper: `--color-paper`
+- Ink: `--color-ink`
+- Category surfaces: candle, PDF, Halloween, pumpkin, Christmas.
 
-## Spacing
-4-point-derived named scale in `assets/css/styles.css`. Components use named spacing tokens rather than arbitrary repeated gaps.
+## Structure
+- Homepage: value-led split hero → search/filter → popular tools → trust strip → language/support.
+- Tool pages: branded tool hero → two-panel workbench → concise education below.
+- Content pages: simple content shell using the same header/footer.
 
-## Motion
-- Motion stance: restrained and functional.
-- Hover/press: short transform/background feedback only.
-- No universal scroll reveals.
-- `prefers-reduced-motion` disables non-essential transitions.
+## Navigation
+Top-level navigation is intentionally product-oriented rather than tool-name spam:
+- Products mega-dropdown
+- About
+- Leave a Review
+- Language menu
+- Support Us
+The Products dropdown groups current tools by category and provides direct tool links.
 
-## Microinteractions stance
-- Silent success when the changed result is already visible.
-- Visible `:focus-visible` on every interactive element.
-- Constant border widths across input states.
-- Minimum touch target: 44px.
-- No celebratory toasts or decorative loaders.
+## Interaction
+- Native `details` for dropdown navigation.
+- Search/filter operates client-side.
+- Tool calculations and file processing stay owned by each tool's existing JS.
+- Focus rings are always visible for keyboard navigation.
+- Motion is restrained to hover/press feedback.
 
-## CTA voice
-- Primary: near-black rectangular button, short label.
-- Secondary: paper/surface button with a one-pixel ink rule.
-- Shape: soft rectangle, not pills.
-- Press state: 1px downward translation.
-
-## Per-page allowances
-- Homepage may use typography and rules as its enrichment.
-- Tool pages must not use decorative enrichment; the workbench is the hero.
-- Content pages use typography only.
-
-## What pages MUST share
-- Quicklio wordmark and Q mark.
-- Acid-lime accent placement.
-- System sans typography.
-- Rectangular control voice.
-- Rule-based hierarchy.
-- Warm-paper surface.
-- Focus treatment and interaction states.
-
-## What pages MAY differ on
-- Internal workbench composition required by the tool.
-- Preview/output region shape.
-- Number of control groups and metric cells.
-- Supporting article length.
-
-## Structural fingerprint
-- Heading placement: hanging/stacked, left-biased.
-- Body composition: asymmetrical spans for home, workbench for tools, single document measure for content.
-- Divider language: hairline + negative space.
-- Button voice: outlined/solid soft rectangles.
-- Imagery: none by default; user-supplied preview only where the tool requires it.
-- Reveal pattern: none.
-
-## Hallmark guardrails
-- No gradient hero.
-- No glassmorphism.
-- No pill-heavy interface.
-- No three-identical-feature-card marketing row.
-- No decorative invented metrics.
-- No card-in-card nesting.
-- No italic display headings.
-- No colors or font-family declarations outside named tokens.
-- No horizontal scroll at 320 / 375 / 414 / 768 px.
+## Responsive floor
+Every page must work without horizontal scrolling at 320, 375, 414, and 768 CSS px. Desktop-only nav collapses to a compact mobile menu.
