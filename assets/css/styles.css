@@ -457,3 +457,5 @@ textarea{min-height:8rem;resize:vertical}
 #csvInput{min-height:11rem;font-family:var(--font-mono);font-size:.78rem;white-space:pre;overflow:auto}
 #previewCanvas:empty{min-height:12rem}
 .tool-page .canvas-wrap>canvas{max-height:36rem;object-fit:contain}
+
+.mega-link[href*="/print/"] .mega-icon{color:oklch(55% .14 255)}
