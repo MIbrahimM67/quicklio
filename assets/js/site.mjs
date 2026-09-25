@@ -197,25 +197,6 @@ for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
   });
 }
 
-const reviewForm=document.querySelector('[data-review-form]');
-if(reviewForm){
-  let rating=5;
-  const stars=[...reviewForm.querySelectorAll('[data-rating]')];
-  for(const star of stars){
-    star.addEventListener('click',()=>{
-      rating=Number(star.dataset.rating)||5;
-      for(const s of stars)s.classList.toggle('is-active',Number(s.dataset.rating)<=rating);
-    });
-  }
-  reviewForm.addEventListener('submit',(event)=>{
-    event.preventDefault();
-    const message=reviewForm.querySelector('textarea')?.value?.trim()||'';
-    const subject=encodeURIComponent(`Quicklio review — ${rating}/5`);
-    const body=encodeURIComponent(`Rating: ${rating}/5\n\n${message}`);
-    location.href=`mailto:feedback@quicklio.app?subject=${subject}&body=${body}`;
-  });
-}
-
 
 
 /* ── Product usage analytics: tool starts, completions, downloads, and cross-tool clicks ── */
