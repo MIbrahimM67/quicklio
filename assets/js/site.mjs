@@ -42,6 +42,7 @@ function quicklioTrack(eventName,params={}){
   gtag('event',eventName,params);
   return true;
 }
+window.quicklioTrack=quicklioTrack;
 function saveAnalyticsConsent(value){
   try{localStorage.setItem(QUICKLIO_CONSENT_KEY,value)}catch{}
 }
@@ -338,6 +339,20 @@ if(reviewForm){
       target_category:targetSegments[1]
     });
   },true);
+})();
+
+/* ── Tool review CTA ── */
+(function(){
+  if(!document.body.classList.contains('tool-page'))return;
+  const main=document.querySelector('main');
+  if(!main||main.querySelector('[data-tool-review-cta]'))return;
+  const h1=document.querySelector('h1')?.textContent?.trim()||'this tool';
+  const cta=document.createElement('section');
+  cta.className='shell tool-review-cta';
+  cta.dataset.toolReviewCta='';
+  const url='/review/?tool='+encodeURIComponent(location.pathname);
+  cta.innerHTML='<div><span class="eyebrow">Help improve Quicklio</span><h2>Did '+h1+' work for you?</h2><p>Leave a quick review. No account is required, and your feedback helps decide what we improve next.</p></div><a class="button primary" href="'+url+'"><svg class="icon" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-star"></use></svg><span>Leave a review</span></a>';
+  main.append(cta);
 })();
 
 /* ── SEO entities, crawlable hub links, and tool breadcrumbs ── */
