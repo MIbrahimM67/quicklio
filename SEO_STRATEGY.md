@@ -100,3 +100,17 @@ Build supporting content only when it strengthens a tool cluster. Prefer:
 - troubleshooting pages with a direct tool solution.
 
 Do not build a generic blog publishing machine. Quicklio's moat is useful browser workflows paired with concise, evidence-based supporting content.
+
+
+## Opportunity research pipeline
+Before building a new tool, use the cluster-first process documented in `SEO_TOPICAL_MAP.md`:
+1. Start from an existing strong Quicklio cluster.
+2. Mine SERP-visible specialist competitors for successful workflows.
+3. Group synonymous queries into one intent before deciding URLs.
+4. Manually validate the current SERP and reject commoditized tool queries unless Quicklio has a real product advantage.
+5. Prefer technical or workflow gaps where articles/forums are standing in for an interactive solution.
+6. Expand an existing canonical tool when the new query is only a parameter/preset variation of the same job.
+7. Build contextual internal links around the user's next likely task, not only global navigation links.
+8. Use Search Console data after launch to decide whether to strengthen the page or split a genuinely different intent.
+
+Do not treat DR, KD, search volume, or allintitle counts as automatic build rules. They are discovery evidence only; final selection depends on intent, SERP quality, product differentiation, and topical fit.
