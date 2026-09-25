@@ -41,7 +41,8 @@ test('every indexable HTML page has core SEO fields and sitemap coverage',()=>{
     assert.equal(canonical,expectedCanonical(file),file+' has the wrong canonical');
     assert.ok(!seenTitles.has(title),'Duplicate title: '+title);
     seenTitles.add(title);
-    assert.ok(sitemap.includes('<loc>'+canonical+'</loc>'),file+' canonical is missing from sitemap.xml');
+    if(isNoindex)assert.ok(!sitemap.includes('<loc>'+canonical+'</loc>'),file+' is noindex but appears in sitemap.xml');
+    else assert.ok(sitemap.includes('<loc>'+canonical+'</loc>'),file+' canonical is missing from sitemap.xml');
   }
 });
 
