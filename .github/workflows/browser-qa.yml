@@ -4,7 +4,11 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'assets/css/styles.css'
+      - 'en/**'
+      - 'assets/css/**'
+      - 'assets/js/**'
+      - 'qa/**'
+      - 'playwright.config.mjs'
       - 'design.md'
       - '.github/workflows/browser-qa.yml'
   workflow_dispatch:
