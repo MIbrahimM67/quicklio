@@ -35,6 +35,8 @@ test('every indexable HTML page has core SEO fields and sitemap coverage',()=>{
     const description=get(html,/<meta name="description" content="([^"]+)"/i).trim();
     const canonical=get(html,/<link rel="canonical" href="([^"]+)"/i).trim();
     const h1s=(html.match(/<h1(?:\s|>)/gi)||[]).length;
+    const robotsMeta=get(html,/<meta name="robots" content="([^"]+)"/i).toLowerCase();
+    const isNoindex=robotsMeta.includes('noindex');
     assert.ok(title, file+' is missing a title');
     assert.ok(description, file+' is missing a meta description');
     assert.equal(h1s,1,file+' must contain exactly one H1');
