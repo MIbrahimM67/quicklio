@@ -41,3 +41,22 @@ test('privacy page discloses Analytics consent',()=>{
   assert.match(privacy,/Google Analytics 4/);
   assert.match(privacy,/Privacy choices/);
 });
+
+
+test('usage analytics events are defined and consent-gated',()=>{
+  for(const name of['tool_started','tool_completed','download_clicked','site_search_used','related_tool_clicked']){
+    assert.match(siteJs,new RegExp(name));
+  }
+  assert.match(siteJs,/function quicklioTrack/);
+  assert.match(siteJs,/quicklioAnalyticsEnabled/);
+  assert.match(siteJs,/query_length/);
+  assert.doesNotMatch(siteJs,/search_term\s*:/);
+});
+
+test('tool analytics includes stable tool dimensions',()=>{
+  assert.match(siteJs,/tool_name/);
+  assert.match(siteJs,/tool_category/);
+  assert.match(siteJs,/tool_path/);
+  assert.match(siteJs,/completion_method/);
+  assert.match(siteJs,/file_extension/);
+});
