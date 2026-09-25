@@ -384,3 +384,19 @@ test('contact sheet drag reorder updates photo order',async({page})=>{
   await expect(page.locator('.reorder-thumb').nth(2)).toContainText('first.svg');
   await expect(page.locator('#status')).toContainText('Photo order updated');
 });
+
+
+test('consented tool use emits start, completion, and download analytics events',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('quicklio_analytics_consent_v1','granted'));
+  await page.goto('/en/images/resize-image-to-exact-kb/');
+  await page.locator('#fileInput').setInputFiles({name:'analytics.svg',mimeType:'image/svg+xml',buffer:svg(800,600,'#348f18')});
+  await page.locator('#width').fill('240');
+  await page.locator('#height').fill('180');
+  await page.locator('#maxKb').fill('80');
+  await page.locator('#processBtn').click();
+  await expect(page.locator('#resultPanel')).toBeVisible();
+  const download=page.waitForEvent('download');
+  await page.locator('#downloadBtn').click();
+  await download;
+  await expect.poll(async()=>page.evaluate(()=>window.dataLayer.map(item=>Array.from(item)).filter(item=>item[0]==='event').map(item=>item[1]))).toEqual(expect.arrayContaining(['tool_started','tool_completed','download_clicked']));
+});
