@@ -34,6 +34,14 @@ function loadQuicklioAnalytics(){
 function readAnalyticsConsent(){
   try{return localStorage.getItem(QUICKLIO_CONSENT_KEY)}catch{return null}
 }
+function quicklioAnalyticsEnabled(){
+  return readAnalyticsConsent()==='granted'&&quicklioGaLoaded;
+}
+function quicklioTrack(eventName,params={}){
+  if(!quicklioAnalyticsEnabled())return false;
+  gtag('event',eventName,params);
+  return true;
+}
 function saveAnalyticsConsent(value){
   try{localStorage.setItem(QUICKLIO_CONSENT_KEY,value)}catch{}
 }
@@ -151,8 +159,20 @@ for(const button of filters){
   });
 }
 search?.addEventListener('input',applyToolFilter);
+function trackSiteSearch(){
+  const q=(search?.value||'').trim();
+  if(!q)return;
+  const visibleCards=cards.filter(card=>!card.hidden);
+  quicklioTrack('site_search_used',{
+    query_length:q.length,
+    result_count:visibleCards.length,
+    had_result:visibleCards.length?1:0,
+    category_filter:activeFilter
+  });
+}
 const openFirstMatch=()=>{
   const first=cards.find(card=>!card.hidden);
+  trackSiteSearch();
   if(first?.href)location.href=first.href;
 };
 search?.addEventListener('keydown',(event)=>{
@@ -195,6 +215,130 @@ if(reviewForm){
   });
 }
 
+
+
+/* ── Product usage analytics: tool starts, completions, downloads, and cross-tool clicks ── */
+(function(){
+  if(!document.body.classList.contains('tool-page'))return;
+
+  const canonical=document.querySelector('link[rel="canonical"]')?.href||location.href;
+  let toolUrl;
+  try{toolUrl=new URL(canonical,location.href)}catch{toolUrl=new URL(location.href)}
+  const segments=toolUrl.pathname.split('/').filter(Boolean);
+  const toolCategory=segments[1]||'other';
+  const toolName=segments[2]||segments.at(-1)||'unknown';
+  const toolPath=toolUrl.pathname;
+  const toolMeta={tool_name:toolName,tool_category:toolCategory,tool_path:toolPath};
+  const root=document.querySelector('.tool-workbench')||document.querySelector('main');
+  if(!root)return;
+
+  let toolStarted=false;
+  let toolCompleted=false;
+  let completionCheckQueued=false;
+
+  function startTool(interactionType){
+    if(toolStarted||!quicklioAnalyticsEnabled())return;
+    toolStarted=true;
+    quicklioTrack('tool_started',{...toolMeta,interaction_type:interactionType});
+    queueCompletionCheck();
+  }
+
+  function completeTool(method){
+    if(toolCompleted||!toolStarted||!quicklioAnalyticsEnabled())return;
+    toolCompleted=true;
+    quicklioTrack('tool_completed',{...toolMeta,completion_method:method});
+  }
+
+  function isVisible(el){
+    if(!el||el.hidden||el.getAttribute('aria-hidden')==='true')return false;
+    const style=getComputedStyle(el);
+    return style.display!=='none'&&style.visibility!=='hidden'&&style.opacity!=='0'&&el.getClientRects().length>0;
+  }
+
+  function hasMeaningfulResult(el){
+    if(!isVisible(el))return false;
+    if(el.matches('.error,[role="alert"].error')||el.querySelector('.error:not([hidden])'))return false;
+    const text=(el.textContent||'').replace(/\s+/g,' ').trim();
+    const visual=el.querySelector('canvas,img[src],svg,video');
+    return text.length>=3||Boolean(visual);
+  }
+
+  function detectCompletion(){
+    completionCheckQueued=false;
+    if(!toolStarted||toolCompleted)return;
+    const candidates=root.querySelectorAll('[data-result],[id*="result" i],[class*="result" i],[id*="output" i],[class*="output" i]');
+    for(const el of candidates){
+      if(hasMeaningfulResult(el)){
+        completeTool('result_visible');
+        break;
+      }
+    }
+  }
+
+  function queueCompletionCheck(){
+    if(completionCheckQueued)return;
+    completionCheckQueued=true;
+    requestAnimationFrame(()=>requestAnimationFrame(detectCompletion));
+  }
+
+  const actionable='input,select,textarea,button,[contenteditable="true"],[draggable="true"],.drop,label.drop';
+  for(const type of['input','change','drop']){
+    root.addEventListener(type,event=>{
+      const target=event.target instanceof Element?event.target:null;
+      if(target&&(target.closest(actionable)||type==='drop'))startTool(type);
+      queueCompletionCheck();
+    },true);
+  }
+  root.addEventListener('click',event=>{
+    const target=event.target instanceof Element?event.target.closest(actionable):null;
+    if(!target||target.matches('[disabled],[aria-disabled="true"]'))return;
+    startTool('click');
+    queueCompletionCheck();
+  },true);
+
+  const observer=new MutationObserver(()=>queueCompletionCheck());
+  observer.observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','class','aria-hidden','disabled','src']});
+
+  const programmaticDownloads=new WeakSet();
+  const nativeAnchorClick=HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click=function(...args){
+    const isDownload=this.hasAttribute('download')||Boolean(this.download);
+    if(isDownload){
+      programmaticDownloads.add(this);
+      if(!toolStarted)startTool('download');
+      const extension=(this.download.match(/\.([a-z0-9]{1,8})$/i)||[])[1]?.toLowerCase()||'unknown';
+      quicklioTrack('download_clicked',{...toolMeta,file_extension:extension,download_method:'programmatic'});
+      completeTool('download');
+      queueMicrotask(()=>programmaticDownloads.delete(this));
+    }
+    return nativeAnchorClick.apply(this,args);
+  };
+
+  document.addEventListener('click',event=>{
+    const link=event.target instanceof Element?event.target.closest('a[href]'):null;
+    if(!link)return;
+
+    if((link.hasAttribute('download')||link.download)&&!programmaticDownloads.has(link)){
+      if(!toolStarted)startTool('download');
+      const extension=(link.download.match(/\.([a-z0-9]{1,8})$/i)||[])[1]?.toLowerCase()||'unknown';
+      quicklioTrack('download_clicked',{...toolMeta,file_extension:extension,download_method:'user_click'});
+      completeTool('download');
+      return;
+    }
+
+    if(!link.closest('main'))return;
+    let targetUrl;
+    try{targetUrl=new URL(link.href,location.href)}catch{return}
+    if(targetUrl.origin!==location.origin||targetUrl.pathname===location.pathname)return;
+    const targetSegments=targetUrl.pathname.split('/').filter(Boolean);
+    if(targetSegments[0]!=='en'||targetSegments.length<3)return;
+    quicklioTrack('related_tool_clicked',{
+      ...toolMeta,
+      target_tool:targetSegments[2],
+      target_category:targetSegments[1]
+    });
+  },true);
+})();
 
 /* ── SEO entities, crawlable hub links, and tool breadcrumbs ── */
 (function(){
