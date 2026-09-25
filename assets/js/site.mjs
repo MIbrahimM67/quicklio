@@ -42,6 +42,7 @@ function quicklioTrack(eventName,params={}){
   gtag('event',eventName,params);
   return true;
 }
+window.quicklioTrack=quicklioTrack;
 function saveAnalyticsConsent(value){
   try{localStorage.setItem(QUICKLIO_CONSENT_KEY,value)}catch{}
 }
@@ -196,25 +197,6 @@ for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
   });
 }
 
-const reviewForm=document.querySelector('[data-review-form]');
-if(reviewForm){
-  let rating=5;
-  const stars=[...reviewForm.querySelectorAll('[data-rating]')];
-  for(const star of stars){
-    star.addEventListener('click',()=>{
-      rating=Number(star.dataset.rating)||5;
-      for(const s of stars)s.classList.toggle('is-active',Number(s.dataset.rating)<=rating);
-    });
-  }
-  reviewForm.addEventListener('submit',(event)=>{
-    event.preventDefault();
-    const message=reviewForm.querySelector('textarea')?.value?.trim()||'';
-    const subject=encodeURIComponent(`Quicklio review — ${rating}/5`);
-    const body=encodeURIComponent(`Rating: ${rating}/5\n\n${message}`);
-    location.href=`mailto:feedback@quicklio.app?subject=${subject}&body=${body}`;
-  });
-}
-
 
 
 /* ── Product usage analytics: tool starts, completions, downloads, and cross-tool clicks ── */
@@ -338,6 +320,20 @@ if(reviewForm){
       target_category:targetSegments[1]
     });
   },true);
+})();
+
+/* ── Tool review CTA ── */
+(function(){
+  if(!document.body.classList.contains('tool-page'))return;
+  const main=document.querySelector('main');
+  if(!main||main.querySelector('[data-tool-review-cta]'))return;
+  const h1=document.querySelector('h1')?.textContent?.trim()||'this tool';
+  const cta=document.createElement('section');
+  cta.className='shell tool-review-cta';
+  cta.dataset.toolReviewCta='';
+  const url='/review/?tool='+encodeURIComponent(location.pathname);
+  cta.innerHTML='<div><span class="eyebrow">Help improve Quicklio</span><h2>Did '+h1+' work for you?</h2><p>Leave a quick review. No account is required, and your feedback helps decide what we improve next.</p></div><a class="button primary" href="'+url+'"><svg class="icon" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-star"></use></svg><span>Leave a review</span></a>';
+  main.append(cta);
 })();
 
 /* ── SEO entities, crawlable hub links, and tool breadcrumbs ── */

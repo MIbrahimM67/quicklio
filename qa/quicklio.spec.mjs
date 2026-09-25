@@ -400,3 +400,20 @@ test('consented tool use emits start, completion, and download analytics events'
   await download;
   await expect.poll(async()=>page.evaluate(()=>window.dataLayer.map(item=>Array.from(item)).filter(item=>item[0]==='event').map(item=>item[1]))).toEqual(expect.arrayContaining(['tool_started','tool_completed','download_clicked']));
 });
+
+
+test('review page renders direct submission UI',async({page})=>{
+  await page.goto('/review/?tool=%2Fen%2Fcrafts%2Fcricut-print-then-cut-size-checker%2F');
+  await expect(page.locator('h1')).toHaveText('Leave a review');
+  await expect(page.locator('#reviewToolName')).toContainText('Cricut Print Then Cut Size Checker');
+  await expect(page.locator('#reviewText')).toBeVisible();
+  await expect(page.locator('#reviewSubmit')).toContainText('Submit review');
+  await expect(page.locator('text=Send review by email')).toHaveCount(0);
+});
+
+test('tool pages expose contextual review link',async({page})=>{
+  await page.goto('/en/crafts/cricut-print-then-cut-size-checker/');
+  const link=page.locator('[data-tool-review-cta] a');
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute('href',/\/review\/\?tool=/);
+});
