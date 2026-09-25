@@ -119,3 +119,44 @@ if(reviewForm){
     location.href=`mailto:feedback@quicklio.app?subject=${subject}&body=${body}`;
   });
 }
+
+
+/* ── SEO entities, crawlable hub links, and tool breadcrumbs ── */
+(function(){
+  const hubRoutes={image:'/en/images/',pdf:'/en/pdf/',crafts:'/en/crafts/'};
+  for(const link of document.querySelectorAll('.mega-category[data-mega-cat]')){
+    const route=hubRoutes[link.dataset.megaCat];
+    if(route)link.href=route;
+  }
+
+  const canonical=document.querySelector('link[rel="canonical"]')?.href;
+  const description=document.querySelector('meta[name="description"]')?.content?.trim();
+  const h1=document.querySelector('h1')?.textContent?.trim();
+  const isTool=document.body.classList.contains('tool-page')&&canonical&&h1;
+  if(!isTool)return;
+
+  const parts=new URL(canonical).pathname.split('/').filter(Boolean);
+  const rawCategory=parts[1]||'';
+  const categoryKey=rawCategory==='images'?'image':rawCategory==='pdf'||rawCategory==='print'?'pdf':rawCategory==='crafts'?'crafts':rawCategory;
+  const categoryNames={image:'Image & Photo Tools',pdf:'PDF & Print Tools',crafts:'Craft Tools',finance:'Money Tools',labels:'Label Tools',social:'Social Image Tools',candles:'Candle Tools',halloween:'Halloween Tools',christmas:'Christmas Tools'};
+  const applicationCategory={finance:'FinanceApplication',image:'DesignApplication',social:'DesignApplication',crafts:'LifestyleApplication',candles:'LifestyleApplication',halloween:'LifestyleApplication',christmas:'LifestyleApplication'}[categoryKey]||'UtilitiesApplication';
+
+  const breadcrumb=document.createElement('nav');
+  breadcrumb.className='seo-breadcrumb shell';
+  breadcrumb.setAttribute('aria-label','Breadcrumb');
+  const crumbs=[{name:'Home',url:'https://quicklio.app/'}];
+  if(hubRoutes[categoryKey])crumbs.push({name:categoryNames[categoryKey],url:'https://quicklio.app'+hubRoutes[categoryKey]});
+  crumbs.push({name:h1,url:canonical});
+  breadcrumb.innerHTML=crumbs.map((c,i)=>i===crumbs.length-1?'<span aria-current="page">'+c.name+'</span>':'<a href="'+new URL(c.url).pathname+'">'+c.name+'</a><span aria-hidden="true">/</span>').join('');
+  document.querySelector('.tool-hero')?.before(breadcrumb);
+
+  const graph=[
+    {'@type':'WebApplication','@id':canonical+'#app',name:h1,url:canonical,description:description||undefined,applicationCategory,operatingSystem:'Any',isAccessibleForFree:true,browserRequirements:'Requires a modern web browser with JavaScript enabled',offers:{'@type':'Offer',price:'0',priceCurrency:'USD'},publisher:{'@type':'Organization','@id':'https://quicklio.app/#organization','name':'Quicklio','url':'https://quicklio.app/'}},
+    {'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:c.url}))}
+  ];
+  const schema=document.createElement('script');
+  schema.type='application/ld+json';
+  schema.id='quicklio-tool-schema';
+  schema.textContent=JSON.stringify({'@context':'https://schema.org','@graph':graph});
+  document.head.append(schema);
+})();
