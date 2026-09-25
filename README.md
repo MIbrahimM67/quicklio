@@ -14,7 +14,7 @@ Static, browser-only tools site. No framework and no build step.
 - `/en/images/photo-to-line-drawing/`
 - `/en/social/instagram-no-crop-image-resizer/`
 - `/en/finance/payday-bills-planner/`
-- `/en/crafts/yarn-amount-calculator/`
+- `/en/crafts/yarn-amount-calculator/`\n- `/en/crafts/cricut-print-then-cut-size-checker/`
 
 - `/en/images/passport-photo-maker/`
 - `/en/print/split-image-for-printing/`
