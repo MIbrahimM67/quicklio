@@ -62,3 +62,11 @@ test('tool schema generator stays enabled',()=>{
   assert.match(js,/BreadcrumbList/);
   assert.match(js,/quicklio-tool-schema/);
 });
+
+
+test('homepage exposes AdSense ownership verification and ads.txt is valid',()=>{
+  const html=fs.readFileSync('index.html','utf8');
+  const ads=fs.readFileSync('ads.txt','utf8').trim();
+  assert.match(html,/<meta name="google-adsense-account" content="ca-pub-2036385623191798">/);
+  assert.equal(ads,'google.com, pub-2036385623191798, DIRECT, f08c47fec0942fa0');
+});
