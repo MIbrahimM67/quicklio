@@ -60,3 +60,23 @@ test('tool analytics includes stable tool dimensions',()=>{
   assert.match(siteJs,/completion_method/);
   assert.match(siteJs,/file_extension/);
 });
+
+
+test('review system public configuration is present without private secrets',()=>{
+  const reviewApp=fs.readFileSync('assets/js/review-app.mjs','utf8');
+  assert.match(reviewApp,/nnucegewfuuwnmsrrlkt\.supabase\.co/);
+  assert.match(reviewApp,/sb_publishable_4D9owHFx7keciutfYmZZNQ_-UP_WIUw/);
+  assert.match(reviewApp,/0x4AAAAAAFDaybWZWf1yU8fl/);
+  assert.match(reviewApp,/signInAnonymously/);
+  assert.match(reviewApp,/captchaToken/);
+  assert.match(reviewApp,/\.from\("reviews"\)\.insert/);
+  assert.doesNotMatch(reviewApp,/service_role|secret[_ -]?key/i);
+});
+
+test('review page no longer uses mailto feedback submission',()=>{
+  const reviewHtml=fs.readFileSync('review/index.html','utf8');
+  assert.match(reviewHtml,/review-app\.mjs/);
+  assert.match(reviewHtml,/Submit review/);
+  assert.doesNotMatch(reviewHtml,/mailto:feedback@quicklio\.app/);
+  assert.doesNotMatch(siteJs,/Quicklio review —/);
+});
