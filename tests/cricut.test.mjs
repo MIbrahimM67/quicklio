@@ -1,0 +1,7 @@
+import test from'node:test';import assert from'node:assert/strict';import{assessCricutFit,getPaper,suggestPapers}from'../assets/js/cricut-core.mjs';
+test('maker letter safe rectangle fits',()=>{const r=assessCricutFit({machine:'maker',paper:'letter',width:6,height:8});assert.equal(r.best.state,'fits');assert.equal(r.best.rotated,false)});
+test('maker letter can be shape dependent',()=>{const r=assessCricutFit({machine:'maker',paper:'letter',width:7.2,height:9});assert.equal(r.best.state,'shape-dependent');assert.ok(r.safeScale.percent<100)});
+test('maker letter rejects beyond official extent',()=>{const r=assessCricutFit({machine:'maker',paper:'letter',width:8,height:10});assert.equal(r.best.state,'too-large');assert.ok(r.officialScale.percent<100)});
+test('rotation can rescue an orientation',()=>{const r=assessCricutFit({machine:'maker',paper:'letter',width:9,height:6.5});assert.equal(r.best.state,'fits');assert.equal(r.needsRotation,true)});
+test('joy 2 uses narrow official width and conservative state',()=>{const p=getPaper('joy2','letter');assert.equal(p.horizontal,3.19);const r=assessCricutFit({machine:'joy2',paper:'letter',width:3,height:8});assert.equal(r.best.state,'shape-dependent');assert.equal(r.specialJoy2,true)});
+test('venture suggestions include larger sheets',()=>{const r=suggestPapers({machine:'venture',currentPaper:'letter',width:10,height:10});assert.ok(r.some(x=>x.paper==='12x12'&&x.best.state!=='too-large'))});
