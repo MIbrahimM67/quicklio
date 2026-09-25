@@ -1,5 +1,80 @@
 document.documentElement.classList.add('js');
 
+/* ── Google Analytics 4 with explicit analytics consent ── */
+const QUICKLIO_GA_ID='G-72360H1LTV';
+const QUICKLIO_CONSENT_KEY='quicklio_analytics_consent_v1';
+window.dataLayer=window.dataLayer||[];
+window.gtag=window.gtag||function(){window.dataLayer.push(arguments)};
+
+gtag('consent','default',{
+  analytics_storage:'denied',
+  ad_storage:'denied',
+  ad_user_data:'denied',
+  ad_personalization:'denied'
+});
+
+let quicklioGaLoaded=false;
+function loadQuicklioAnalytics(){
+  if(quicklioGaLoaded)return;
+  quicklioGaLoaded=true;
+  gtag('consent','update',{
+    analytics_storage:'granted',
+    ad_storage:'denied',
+    ad_user_data:'denied',
+    ad_personalization:'denied'
+  });
+  gtag('js',new Date());
+  gtag('config',QUICKLIO_GA_ID);
+  const script=document.createElement('script');
+  script.async=true;
+  script.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(QUICKLIO_GA_ID);
+  document.head.append(script);
+}
+
+function readAnalyticsConsent(){
+  try{return localStorage.getItem(QUICKLIO_CONSENT_KEY)}catch{return null}
+}
+function saveAnalyticsConsent(value){
+  try{localStorage.setItem(QUICKLIO_CONSENT_KEY,value)}catch{}
+}
+function removeConsentBanner(){
+  document.querySelector('[data-analytics-consent]')?.remove();
+}
+function applyAnalyticsChoice(value){
+  saveAnalyticsConsent(value);
+  removeConsentBanner();
+  if(value==='granted')loadQuicklioAnalytics();
+  else gtag('consent','update',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+}
+function showAnalyticsConsent(){
+  if(document.querySelector('[data-analytics-consent]'))return;
+  const banner=document.createElement('section');
+  banner.className='analytics-consent';
+  banner.dataset.analyticsConsent='';
+  banner.setAttribute('aria-label','Analytics privacy choices');
+  banner.innerHTML='<div class="analytics-consent-copy"><strong>Help improve Quicklio?</strong><p>With your permission, Quicklio uses Google Analytics to understand traffic and how people use the tools. Analytics stays off until you accept. No advertising cookies are enabled.</p><a href="/privacy/">Privacy details</a></div><div class="analytics-consent-actions"><button class="button primary small" type="button" data-analytics-accept>Accept analytics</button><button class="button small" type="button" data-analytics-decline>Decline</button></div>';
+  banner.querySelector('[data-analytics-accept]').addEventListener('click',()=>applyAnalyticsChoice('granted'));
+  banner.querySelector('[data-analytics-decline]').addEventListener('click',()=>applyAnalyticsChoice('denied'));
+  document.body.append(banner);
+}
+function addAnalyticsPreferenceControl(){
+  const legal=document.querySelector('.footer-links>div:last-child');
+  if(!legal||legal.querySelector('[data-analytics-preferences]'))return;
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='footer-text-button';
+  button.dataset.analyticsPreferences='';
+  button.textContent='Privacy choices';
+  button.addEventListener('click',showAnalyticsConsent);
+  legal.append(button);
+}
+
+const savedAnalyticsConsent=readAnalyticsConsent();
+if(savedAnalyticsConsent==='granted')loadQuicklioAnalytics();
+else if(savedAnalyticsConsent!=='denied')showAnalyticsConsent();
+addAnalyticsPreferenceControl();
+
+
 const allDetails=[...document.querySelectorAll('.nav-details')];
 for(const item of allDetails){
   item.addEventListener('toggle',()=>{
