@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDF Page Box Editor – Edit TrimBox, BleedBox & CropBox | Quicklio</title>
+  <meta name="description" content="Inspect and edit PDF MediaBox, CropBox, TrimBox, BleedBox, and ArtBox online. Visual page-box overlay, mm/in/pt controls, page ranges, and verified browser-only export.">
+  <link rel="canonical" href="https://quicklio.app/en/pdf/pdf-page-box-editor/">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/brand/quicklio-favicon.png">
+  <link rel="apple-touch-icon" href="/assets/brand/quicklio-favicon.png">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Quicklio">
+  <meta property="og:title" content="PDF Page Box Editor – TrimBox, BleedBox & CropBox">
+  <meta property="og:description" content="Visually inspect and edit all five PDF page boxes in your browser.">
+  <meta property="og:url" content="https://quicklio.app/en/pdf/pdf-page-box-editor/">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PDF Page Box Editor","url":"https://quicklio.app/en/pdf/pdf-page-box-editor/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","isAccessibleForFree":true,"browserRequirements":"Requires a modern web browser with JavaScript enabled","description":"Inspect and edit MediaBox, CropBox, BleedBox, TrimBox, and ArtBox values in a PDF."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Quicklio","item":"https://quicklio.app/"},{"@type":"ListItem","position":2,"name":"PDF & Print Tools","item":"https://quicklio.app/en/pdf/"},{"@type":"ListItem","position":3,"name":"PDF Page Box Editor","item":"https://quicklio.app/en/pdf/pdf-page-box-editor/"}]}</script>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .pagebox-shell{width:min(1180px,calc(100% - 2rem));margin:0 auto}
+    .pagebox-hero{padding:3rem 0 1.5rem;max-width:860px}
+    .pagebox-hero .eyebrow{font-size:.82rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5d6b58}
+    .pagebox-hero h1{margin:.45rem 0 .8rem;font-size:clamp(2.2rem,6vw,4.5rem);line-height:.98}
+    .pagebox-hero p{font-size:1.08rem;max-width:760px;color:#4b4b44}
+    .pagebox-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:1.25rem;padding-bottom:2rem}
+    .pagebox-panel{background:#fff;border:1px solid var(--color-rule,#d9d3c6);border-radius:1.15rem;padding:1rem;box-shadow:0 12px 34px rgba(40,36,28,.05)}
+    .pagebox-drop{min-height:9rem;border:1.5px dashed #aaa08e;border-radius:1rem;display:grid;place-items:center;text-align:center;padding:1rem;cursor:pointer;background:#fbf8f0}
+    .pagebox-drop.is-drag{border-style:solid}
+    .pagebox-drop strong{display:block;font-size:1.05rem;margin-bottom:.25rem}
+    .pagebox-meta{margin:.75rem 0 0;color:#5a5a52;font-size:.92rem;overflow-wrap:anywhere}
+    .pagebox-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:1rem 0}
+    .pagebox-toolbar label,.box-fields label,.preset-grid label{display:grid;gap:.3rem;font-size:.78rem;font-weight:750;color:#53534c}
+    .pagebox-toolbar input,.pagebox-toolbar select,.box-fields input,.preset-grid input{width:100%;min-width:0;padding:.7rem .72rem;border:1px solid #cfc7b8;border-radius:.65rem;background:#fff;color:#24241f}
+    .pagebox-nav{display:flex;align-items:end;gap:.55rem}
+    .pagebox-nav label{flex:1}
+    .pagebox-nav button{min-width:2.6rem}
+    .pagebox-preview-wrap{position:sticky;top:5.5rem}
+    .preview-top{display:flex;justify-content:space-between;gap:1rem;align-items:start;margin-bottom:.7rem}
+    .preview-top h2{margin:0;font-size:1.1rem}
+    .preview-top p{margin:.15rem 0 0;color:#66645c;font-size:.85rem}
+    .preview-stage{display:grid;place-items:center;overflow:auto;max-height:70vh;border-radius:.85rem;background:#d9d7d0;padding:.75rem}
+    .preview-surface{position:relative;line-height:0;max-width:100%}
+    #previewCanvas{display:block;width:100%;height:auto;background:#fff;box-shadow:0 3px 18px rgba(0,0,0,.12)}
+    .page-box-overlay{position:absolute;pointer-events:none;border:2px solid;box-sizing:border-box;z-index:2}
+    .page-box-overlay span{position:absolute;left:2px;top:2px;background:rgba(255,255,255,.88);padding:.05rem .25rem;border-radius:.22rem;font-size:.62rem;font-weight:850;color:#191915}
+    .page-box-overlay.is-muted{opacity:.48;border-style:dashed}
+    .legend{display:flex;flex-wrap:wrap;gap:.45rem .9rem;margin-top:.7rem;font-size:.75rem;color:#55544e}
+    .legend span{display:inline-flex;align-items:center;gap:.3rem}
+    .legend-swatch{width:.8rem;height:.8rem;border:2px solid;display:inline-block}
+    .swatch-mediabox{border-color:#222}.swatch-cropbox{border-color:#b36b00}.swatch-bleedbox{border-color:#a13d63}.swatch-trimbox{border-color:#217a45}.swatch-artbox{border-color:#365fa0}
+    .box-grid{display:grid;gap:.8rem}
+    .box-card{border:1px solid #d8d1c5;border-radius:.9rem;padding:.9rem;background:#fff}
+    .box-card.is-enabled{box-shadow:inset 0 0 0 2px rgba(47,111,55,.15);border-color:#7f9d7a}
+    .box-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:center}
+    .box-enable{display:flex;align-items:center;gap:.45rem;font-weight:850}
+    .box-card h3{font-size:.92rem;margin:.55rem 0 .2rem}
+    .box-card p{font-size:.8rem;color:#666159;margin:0 0 .7rem}
+    .box-card small{display:block;margin-top:.55rem;color:#656159;overflow-wrap:anywhere}
+    .box-badge{font-size:.67rem;border-radius:999px;padding:.18rem .4rem;background:#eee9df;color:#656159;white-space:nowrap}
+    .box-badge.is-explicit{background:#e2efe0;color:#2f6230}
+    .box-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+    .preset-card{margin-top:1rem;border-top:1px solid #e1dbcf;padding-top:1rem}
+    .preset-card h2{font-size:1rem;margin:0 0 .7rem}
+    .preset-grid{display:grid;grid-template-columns:1fr;gap:.55rem}
+    .preset-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:end}
+    .box-validation{margin:.9rem 0;padding:.7rem .8rem;border-radius:.7rem;font-size:.82rem}
+    .box-validation.is-ok{background:#eef6eb;color:#315d31}
+    .box-validation.has-warning{background:#fff0df;color:#7b4c14}
+    .pagebox-actions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+    .privacy-note{font-size:.76rem;color:#68665f;margin:.65rem 0 0}
+    .pagebox-copy{display:grid;grid-template-columns:1fr;gap:1rem;padding:1rem 0 4rem}
+    .content-card{background:#fff;border:1px solid #ded7cb;border-radius:1rem;padding:1.1rem}
+    .content-card h2{margin-top:0;font-size:1.25rem}
+    .content-card p,.content-card li{color:#504f48;line-height:1.65}
+    .content-card a{font-weight:750}
+    @media(min-width:900px){
+      .pagebox-layout{grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);align-items:start}
+      .pagebox-toolbar{grid-template-columns:1.2fr .7fr 1.1fr}
+      .box-fields{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .pagebox-copy{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" integrity="sha512-z8IYLHO8bTgFqj+yrPyIJnzBDf7DDhWwiEsk4sY+Oe6J2M+WQequeGS7qioI5vT6rXgVRb4K1UVQC5ER7MKzKQ==" crossorigin="anonymous"></script>
+</head>
+<body class="tool-page theme-pdf">
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="/"><img src="/assets/brand/quicklio-mark.svg" alt="" width="38" height="38"><span class="brand-word">Quicklio</span></a>
+    <nav class="primary-nav" aria-label="Primary"><a href="/en/pdf/">PDF tools</a><a href="/en/images/">Image tools</a><a href="/about/">About</a></nav>
+  </div>
+</header>
+<main class="pagebox-shell">
+  <section class="pagebox-hero">
+    <div class="eyebrow">PDF & print · prepress</div>
+    <h1>PDF Page Box Editor</h1>
+    <p>Inspect and edit <strong>MediaBox, CropBox, BleedBox, TrimBox, and ArtBox</strong> with a visual overlay. Your PDF stays in your browser, and Quicklio verifies the written box values before downloading the result.</p>
+  </section>
+  <section class="pagebox-layout" aria-label="PDF page box editor">
+    <div>
+      <div class="pagebox-panel">
+        <input id="pdfInput" type="file" accept="application/pdf,.pdf" hidden>
+        <div id="drop" class="pagebox-drop" role="button" tabindex="0" aria-label="Choose PDF"><div><strong>Drop a PDF here or click to choose</strong><span>Nothing is uploaded to Quicklio.</span></div></div>
+        <p id="fileMeta" class="pagebox-meta">Choose a PDF to inspect its page boxes.</p>
+        <div id="status" class="notice" aria-live="polite">Ready.</div>
+      </div>
+      <div id="workspace" hidden>
+        <div class="pagebox-panel" style="margin-top:1rem">
+          <div class="pagebox-toolbar">
+            <label>Pages to update<input id="range" type="text" placeholder="All pages" aria-label="Pages to update"></label>
+            <label>Units<select id="unit"><option value="mm" selected>Millimeters</option><option value="in">Inches</option><option value="pt">Points</option></select></label>
+            <div class="pagebox-nav"><button id="prevPage" type="button" class="button secondary" aria-label="Previous page">←</button><label>Preview page<input id="pageNumber" type="number" min="1" value="1"></label><button id="nextPage" type="button" class="button secondary" aria-label="Next page">→</button></div>
+          </div>
+          <p id="pageInfo" class="pagebox-meta"></p>
+          <p class="pagebox-meta"><strong>Coordinates are Left, Bottom, Right, Top.</strong> Enable only the boxes you actually want written to the PDF.</p>
+          <div class="box-grid">
+            <section class="box-card" data-card="MediaBox"><div class="box-card-head"><label class="box-enable"><input type="checkbox" data-enable="MediaBox"><span>Change MediaBox</span></label><span class="box-badge" data-explicit="MediaBox">—</span></div><h3>Physical page boundary</h3><p>The outer PDF page boundary. Changing it can change the page canvas itself.</p><div class="box-fields"><label><span>Left</span><input type="number" step="0.01" inputmode="decimal" data-box="MediaBox" data-edge="left" aria-label="MediaBox left"></label><label><span>Bottom</span><input type="number" step="0.01" inputmode="decimal" data-box="MediaBox" data-edge="bottom" aria-label="MediaBox bottom"></label><label><span>Right</span><input type="number" step="0.01" inputmode="decimal" data-box="MediaBox" data-edge="right" aria-label="MediaBox right"></label><label><span>Top</span><input type="number" step="0.01" inputmode="decimal" data-box="MediaBox" data-edge="top" aria-label="MediaBox top"></label></div><small data-current="MediaBox">Current: —</small></section>
+            <section class="box-card" data-card="CropBox"><div class="box-card-head"><label class="box-enable"><input type="checkbox" data-enable="CropBox"><span>Change CropBox</span></label><span class="box-badge" data-explicit="CropBox">—</span></div><h3>Display / print clipping</h3><p>The region viewers and printers normally clip to. It defaults to MediaBox when absent.</p><div class="box-fields"><label><span>Left</span><input type="number" step="0.01" inputmode="decimal" data-box="CropBox" data-edge="left" aria-label="CropBox left"></label><label><span>Bottom</span><input type="number" step="0.01" inputmode="decimal" data-box="CropBox" data-edge="bottom" aria-label="CropBox bottom"></label><label><span>Right</span><input type="number" step="0.01" inputmode="decimal" data-box="CropBox" data-edge="right" aria-label="CropBox right"></label><label><span>Top</span><input type="number" step="0.01" inputmode="decimal" data-box="CropBox" data-edge="top" aria-label="CropBox top"></label></div><small data-current="CropBox">Current: —</small></section>
+            <section class="box-card" data-card="BleedBox"><div class="box-card-head"><label class="box-enable"><input type="checkbox" data-enable="BleedBox"><span>Change BleedBox</span></label><span class="box-badge" data-explicit="BleedBox">—</span></div><h3>Production bleed area</h3><p>The production output area that can include extra artwork beyond the finished trim.</p><div class="box-fields"><label><span>Left</span><input type="number" step="0.01" inputmode="decimal" data-box="BleedBox" data-edge="left" aria-label="BleedBox left"></label><label><span>Bottom</span><input type="number" step="0.01" inputmode="decimal" data-box="BleedBox" data-edge="bottom" aria-label="BleedBox bottom"></label><label><span>Right</span><input type="number" step="0.01" inputmode="decimal" data-box="BleedBox" data-edge="right" aria-label="BleedBox right"></label><label><span>Top</span><input type="number" step="0.01" inputmode="decimal" data-box="BleedBox" data-edge="top" aria-label="BleedBox top"></label></div><small data-current="BleedBox">Current: —</small></section>
+            <section class="box-card" data-card="TrimBox"><div class="box-card-head"><label class="box-enable"><input type="checkbox" data-enable="TrimBox"><span>Change TrimBox</span></label><span class="box-badge" data-explicit="TrimBox">—</span></div><h3>Finished page size</h3><p>The intended final page after trimming. This is the key box many printers expect.</p><div class="box-fields"><label><span>Left</span><input type="number" step="0.01" inputmode="decimal" data-box="TrimBox" data-edge="left" aria-label="TrimBox left"></label><label><span>Bottom</span><input type="number" step="0.01" inputmode="decimal" data-box="TrimBox" data-edge="bottom" aria-label="TrimBox bottom"></label><label><span>Right</span><input type="number" step="0.01" inputmode="decimal" data-box="TrimBox" data-edge="right" aria-label="TrimBox right"></label><label><span>Top</span><input type="number" step="0.01" inputmode="decimal" data-box="TrimBox" data-edge="top" aria-label="TrimBox top"></label></div><small data-current="TrimBox">Current: —</small></section>
+            <section class="box-card" data-card="ArtBox"><div class="box-card-head"><label class="box-enable"><input type="checkbox" data-enable="ArtBox"><span>Change ArtBox</span></label><span class="box-badge" data-explicit="ArtBox">—</span></div><h3>Meaningful artwork</h3><p>The extent of meaningful page content as defined by the document creator.</p><div class="box-fields"><label><span>Left</span><input type="number" step="0.01" inputmode="decimal" data-box="ArtBox" data-edge="left" aria-label="ArtBox left"></label><label><span>Bottom</span><input type="number" step="0.01" inputmode="decimal" data-box="ArtBox" data-edge="bottom" aria-label="ArtBox bottom"></label><label><span>Right</span><input type="number" step="0.01" inputmode="decimal" data-box="ArtBox" data-edge="right" aria-label="ArtBox right"></label><label><span>Top</span><input type="number" step="0.01" inputmode="decimal" data-box="ArtBox" data-edge="top" aria-label="ArtBox top"></label></div><small data-current="ArtBox">Current: —</small></section>
+          </div>
+          <div class="preset-card"><h2>Useful print presets</h2><div class="preset-grid"><button id="presetCropMedia" type="button" class="button secondary">Set CropBox = MediaBox</button><button id="presetTrimCrop" type="button" class="button secondary">Set TrimBox = CropBox</button><div class="preset-line"><label>Trim inset from MediaBox<input id="trimInset" type="number" min="0" step="0.1" value="3"></label><button id="presetTrimInset" type="button" class="button secondary">Set TrimBox</button></div><div class="preset-line"><label>Bleed around TrimBox<input id="bleedAmount" type="number" min="0" step="0.1" value="3"></label><button id="presetBleed" type="button" class="button secondary">Set BleedBox</button></div></div></div>
+          <div id="validation" class="box-validation is-ok">Box geometry will be checked here.</div>
+          <div class="pagebox-actions"><button id="processBtn" type="button" class="button primary">Apply boxes & download PDF</button></div>
+          <p class="privacy-note">Browser-only processing. Changing page boxes changes PDF metadata/geometry; it does not automatically move, scale, or extend artwork.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="pagebox-panel pagebox-preview-wrap"><div class="preview-top"><div><h2>Visual page-box overlay</h2><p>Solid = enabled for editing · dashed = current/inherited</p></div></div><div id="previewStage" class="preview-stage"><div id="previewSurface" class="preview-surface"><canvas id="previewCanvas" width="600" height="780" aria-label="PDF page preview"></canvas><div class="page-box-overlay overlay-mediabox" data-overlay="MediaBox" aria-hidden="true" hidden><span>MediaBox</span></div><div class="page-box-overlay overlay-cropbox" data-overlay="CropBox" aria-hidden="true" hidden><span>CropBox</span></div><div class="page-box-overlay overlay-bleedbox" data-overlay="BleedBox" aria-hidden="true" hidden><span>BleedBox</span></div><div class="page-box-overlay overlay-trimbox" data-overlay="TrimBox" aria-hidden="true" hidden><span>TrimBox</span></div><div class="page-box-overlay overlay-artbox" data-overlay="ArtBox" aria-hidden="true" hidden><span>ArtBox</span></div></div></div><div class="legend"><span><i class="legend-swatch swatch-mediabox"></i>MediaBox</span><span><i class="legend-swatch swatch-cropbox"></i>CropBox</span><span><i class="legend-swatch swatch-bleedbox"></i>BleedBox</span><span><i class="legend-swatch swatch-trimbox"></i>TrimBox</span><span><i class="legend-swatch swatch-artbox"></i>ArtBox</span></div></aside>
+  </section>
+  <section class="pagebox-copy">
+    <article class="content-card"><h2>What are PDF page boxes?</h2><p>A PDF page can carry five rectangles. <strong>MediaBox</strong> is the physical page boundary. <strong>CropBox</strong> controls normal viewing/printing clipping. <strong>BleedBox</strong> describes the production bleed region. <strong>TrimBox</strong> describes the intended finished page after trimming. <strong>ArtBox</strong> describes the meaningful artwork area.</p><p>CropBox defaults to MediaBox when it is absent. BleedBox, TrimBox, and ArtBox default to CropBox. Quicklio labels those fallback values as “default / inherited” so you can distinguish them from explicitly stored box entries.</p></article>
+    <article class="content-card"><h2>When should you edit TrimBox or BleedBox?</h2><p>Use this when a printer, prepress check, imposition workflow, or publishing platform expects explicit trim or bleed metadata that your PDF does not contain. A common workflow is to set the finished page as TrimBox and then place BleedBox a few millimeters outside it.</p><p>Do not use page-box metadata to fake missing bleed. If artwork stops at the trim edge, setting a larger BleedBox does not create new artwork beyond that edge. For artwork preparation, use <a href="/en/pdf/add-bleed-and-crop-marks/">Add Bleed & Crop Marks</a>.</p></article>
+    <article class="content-card"><h2>Page boxes vs cropping a PDF</h2><p>Changing CropBox can change what is visible without rebuilding the page content. Quicklio’s <a href="/en/pdf/crop-pdf/">Crop PDF</a> tool is better when your actual goal is trimming visible margins into a newly sized output page. This editor is for precise PDF box metadata and prepress geometry.</p></article>
+    <article class="content-card"><h2>Safety checks built into the editor</h2><ul><li>All edited boxes must have positive width and height.</li><li>CropBox, BleedBox, TrimBox, and ArtBox are checked against MediaBox.</li><li>Quicklio warns when TrimBox is not contained by BleedBox.</li><li>The exported PDF is reopened and the changed values are verified before download.</li></ul><p>Need another workflow? Browse all <a href="/en/pdf/">PDF & print tools</a>.</p></article>
+  </section>
+</main>
+<footer class="site-footer"><div class="shell footer-inner"><span>Quicklio</span><nav aria-label="Footer"><a href="/privacy/">Privacy</a><a href="/about/">About</a><a href="/en/pdf/">PDF tools</a></nav></div></footer>
+<script type="module" src="/assets/js/site.mjs"></script>
+<script type="module" src="/assets/js/pdf-page-box-app.mjs"></script>
+</body></html>
