@@ -1,0 +1,38 @@
+import{test,expect}from'@playwright/test';
+import{PDFDocument,StandardFonts}from'pdf-lib';
+
+async function samplePdf(){
+  const d=await PDFDocument.create();const font=await d.embedFont(StandardFonts.Helvetica);const bold=await d.embedFont(StandardFonts.HelveticaBold);
+  const p1=d.addPage([612,792]);p1.drawText('Quarterly Report',{x:72,y:720,size:20,font:bold});p1.drawText('Revenue increased during the quarter and customer retention improved.',{x:72,y:680,size:11,font});p1.drawText('This paragraph should become editable Word text.',{x:72,y:662,size:11,font});
+  const p2=d.addPage([612,792]);p2.drawText('Second Page',{x:72,y:720,size:18,font:bold});p2.drawText('Another editable sentence.',{x:72,y:680,size:11,font});
+  return Buffer.from(await d.save());
+}
+
+test('PDF to Word analyzes selectable text and downloads DOCX',async({page})=>{
+  await page.goto('/en/pdf/pdf-to-word/');
+  await expect(page.locator('h1')).toHaveText('PDF to Word Converter');
+  await page.locator('#pdfInput').setInputFiles({name:'report.pdf',mimeType:'application/pdf',buffer:await samplePdf()});
+  await expect(page.locator('#fileMeta')).toContainText('2 pages');
+  await page.locator('#range').fill('1');
+  await page.locator('#analyzeBtn').click();
+  await expect(page.locator('#results')).toBeVisible();
+  await expect(page.locator('#previewText')).toContainText('Quarterly Report');
+  await expect(page.locator('#previewText')).toContainText('editable Word text');
+  const downloadPromise=page.waitForEvent('download');
+  await page.locator('#convertBtn').click();
+  const download=await downloadPromise;
+  expect(download.suggestedFilename()).toBe('report-converted.docx');
+  const path=await download.path();expect(path).toBeTruthy();
+  const fs=await import('node:fs');const buf=fs.readFileSync(path);
+  expect(buf.length).toBeGreaterThan(500);expect(buf.subarray(0,2).toString()).toBe('PK');
+});
+
+test('PDF to Word flags image-only pages and fits mobile',async({page})=>{
+  const d=await PDFDocument.create();d.addPage([300,400]);
+  await page.setViewportSize({width:375,height:812});
+  await page.goto('/en/pdf/pdf-to-word/');
+  await page.locator('#pdfInput').setInputFiles({name:'scan.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#analyzeBtn').click();
+  await expect(page.locator('#qualityList')).toContainText('No selectable text');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2)).toBeTruthy();
+});
