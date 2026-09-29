@@ -5,13 +5,14 @@ const $=s=>document.querySelector(s);
 let file=null,bytes=null,pdf=null,total=0,analysis=null,analysisKey='';
 function msg(text,error=false){const el=$('#status');el.textContent=text;el.className='notice '+(error?'error':'');}
 function setProgress(text,value=null){$('#progressText').textContent=text;const bar=$('#progressBar');if(value===null){bar.hidden=true;bar.value=0}else{bar.hidden=false;bar.value=Math.max(0,Math.min(100,value));}}
-function mode(){return $('#conversionMode')?.value||'editable'}
+function mode(){return $('#conversionMode')?.value||'hybrid'}
 function optionKey(){return[$('#range').value.trim(),$('#ocrScans').checked?'ocr':'text',mode()].join('|')}
 function resetAnalysis(){analysis=null;analysisKey='';$('#results').hidden=true;$('#convertBtn').disabled=true;$('#previewText').textContent='';$('#qualityList').innerHTML='';}
 function safeBaseName(name){return(name.replace(/\.pdf$/i,'').trim()||'document').replace(/[<>:"/\\|?*\u0000-\u001F]/g,'-').slice(0,120)}
 function refreshModeHelp(){
-  const layout=mode()==='layout';
-  const help=$('#modeHelp');if(help)help.textContent=layout?'Preserves images, diagrams, charts, fonts, columns, and page appearance by placing a high-quality snapshot of each PDF page into Word. The page itself is not individually editable.':'Reconstructs editable Word text and preserves page size, headings, alignment, indentation, and spacing where the PDF exposes enough information. Images and complex graphics may not remain in the editable flow.';
+  const current=mode(),layout=current==='layout',hybrid=current==='hybrid';
+  const help=$('#modeHelp');
+  if(help)help.textContent=layout?'Preserves the complete page appearance by placing a high-quality snapshot of each PDF page into Word. Best visual match, but the page content is not individually editable.':hybrid?'Recommended: keeps selectable text editable while preserving diagrams, charts, images, vector graphics, rules, and other non-text visuals as a separate visual layer behind the Word text.':'Reconstructs editable Word text and preserves page size, headings, alignment, indentation, and spacing where the PDF exposes enough information. Complex visuals may be omitted.';
   const ocr=$('#ocrScans');if(ocr){ocr.disabled=layout;ocr.closest('label')?.classList.toggle('is-disabled',layout)}
   const labels=$('#pageLabels');if(labels){labels.disabled=layout;labels.closest('label')?.classList.toggle('is-disabled',layout)}
 }
@@ -59,7 +60,7 @@ function visualSignals(operatorList){
   const pathOps=new Set([ops.constructPath,ops.paintFormXObjectBegin].filter(Number.isFinite));
   let images=0,vectorOps=0;
   for(const fn of operatorList?.fnArray||[]){if(imageOps.has(fn))images++;if(pathOps.has(fn))vectorOps++}
-  return{images,vectorOps,hasVisuals:images>0||vectorOps>=3};
+  return{images,vectorOps,hasVisuals:images>0||vectorOps>0};
 }
 async function analyzeDocument(){
   if(!pdf)throw Error('Choose a PDF first.');
@@ -84,14 +85,15 @@ async function analyzeDocument(){
   analysis={pages,selectedCount:selected.length,ocrCount,scanCount,complexCount,textPages,visualPages};analysisKey=optionKey();renderAnalysis();return analysis;
 }
 function renderAnalysis(){
-  const a=analysis;if(!a)return;const layout=mode()==='layout';
+  const a=analysis;if(!a)return;const current=mode(),layout=current==='layout',hybrid=current==='hybrid';
   $('#results').hidden=false;$('#convertBtn').disabled=false;
   $('#summary').innerHTML=`<div><strong>${a.selectedCount}</strong><span>pages selected</span></div><div><strong>${a.textPages}</strong><span>text pages</span></div><div><strong>${a.visualPages}</strong><span>visual pages</span></div><div><strong>${a.complexCount}</strong><span>layout warnings</span></div>`;
-  const callout=$('#qualityCallout');if(callout)callout.innerHTML=layout?'Preserve Layout mode keeps <strong>images, diagrams, charts, vector artwork, columns, and page appearance</strong> by rendering each selected PDF page into the Word document. The visual page is faithful, but its individual text and graphics are not separately editable.':'Editable Text mode reconstructs <strong>editable Word text</strong> and now keeps more page size, heading, alignment, indentation, and spacing information. Pages with images, diagrams, or complex columns may still differ from the PDF; switch to Preserve Layout when visual fidelity matters more than editability.';
+  const callout=$('#qualityCallout');
+  if(callout)callout.innerHTML=layout?'Preserve Layout mode keeps <strong>images, diagrams, charts, vector artwork, columns, and page appearance</strong> by rendering each selected PDF page into the Word document. The visual page is faithful, but its individual text and graphics are not separately editable.':hybrid?'Hybrid mode keeps <strong>editable Word text</strong> while rendering the PDF\'s non-text graphics separately. Images, diagrams, charts, rules, vector artwork, and backgrounds stay visible without baking the selectable text into the screenshot.':'Editable Text mode reconstructs <strong>editable Word text</strong> and keeps page size, heading, alignment, indentation, and spacing information where possible. Complex visuals are not preserved.';
   const list=$('#qualityList');list.innerHTML='';
   for(const p of a.pages){
     const li=document.createElement('li');
-    const state=layout?'Layout will be preserved':p.usedOcr?'OCR used':p.diag.scannedLikely?'No selectable text':p.diag.complexLayout?'Review layout':'Good text extraction';
+    const state=layout?'Layout will be preserved':hybrid?(p.visuals.hasVisuals?'Editable text + visual layer':'Editable text'):p.usedOcr?'OCR used':p.diag.scannedLikely?'No selectable text':p.diag.complexLayout?'Review layout':'Good text extraction';
     const visual=p.visuals.hasVisuals?` · ${p.visuals.images?`${p.visuals.images} image object${p.visuals.images===1?'':'s'}`:'graphics detected'}`:'';
     li.innerHTML=`<strong>Page ${p.pageNumber}</strong><span>${state}</span><small>${p.diag.charCount.toLocaleString()} selectable characters${p.diag.complexLayout?' · possible columns/tables':''}${visual}</small>`;list.append(li);
   }
@@ -100,37 +102,56 @@ function renderAnalysis(){
   if(layout){msg(a.visualPages?`Analysis complete. Preserve Layout will keep the visual content on ${a.visualPages} page${a.visualPages===1?'':'s'}.`:'Analysis complete. Preserve Layout will reproduce each selected PDF page inside Word.');return}
   const missing=a.pages.filter(p=>p.diag.scannedLikely&&!p.usedOcr).length;
   if(missing)msg(`${missing} selected page${missing===1?' has':'s have'} no selectable text. Turn on OCR for scanned pages if needed.`,true);
-  else if(a.visualPages||a.complexCount)msg('Analysis complete. Some pages contain visuals or complex layout; use Preserve Layout mode if appearance matters more than editability.');
+  else if(hybrid&&a.visualPages)msg(`Analysis complete. Hybrid mode will keep editable text and preserve non-text visuals on ${a.visualPages} page${a.visualPages===1?'':'s'}.`);
+  else if(a.visualPages||a.complexCount)msg('Analysis complete. Some pages contain visuals or complex layout; Hybrid mode usually gives the best balance.');
   else msg('Analysis complete. The selected pages are ready to convert.');
 }
 $('#analyzeBtn').addEventListener('click',async()=>{try{await analyzeDocument()}catch(e){msg(e?.message||'Could not analyze this PDF.',true);setProgress('Analysis stopped.')}});
 
 function canvasToPng(canvas){return new Promise((resolve,reject)=>canvas.toBlob(async blob=>blob?resolve(new Uint8Array(await blob.arrayBuffer())):reject(Error('Could not render a page image.')),'image/png'))}
-async function renderLayoutPage(page,pageNumber,index,count){
+function textPaintOps(){
+  const o=pdfjsLib.OPS||{};
+  return new Set([o.showText,o.showSpacedText,o.nextLineShowText,o.nextLineSetSpacingShowText].filter(Number.isFinite));
+}
+async function renderPageImage(page,pageNumber,index,count,{graphicsOnly=false}={}){
   const baseViewport=page.getViewport({scale:1});
   const maxSide=count>40?1500:count>15?1800:2100;
   const scale=Math.max(1,Math.min(1.8,maxSide/Math.max(baseViewport.width,baseViewport.height)));
   const viewport=page.getViewport({scale});
   const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
-  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  setProgress(`Rendering page ${pageNumber} for layout…`,5+index/count*86);
-  await page.render({canvasContext:ctx,viewport}).promise;
+  const ctx=canvas.getContext('2d',{alpha:graphicsOnly});
+  if(graphicsOnly)ctx.clearRect(0,0,canvas.width,canvas.height);else{ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height)}
+  setProgress(`${graphicsOnly?'Capturing visuals':'Rendering layout'} on page ${pageNumber}…`,5+index/count*86);
+  const blocked=textPaintOps();
+  const params={canvasContext:ctx,viewport};
+  if(graphicsOnly)params.operationsFilter=(opIndex,operatorList)=>!blocked.has(operatorList.fnArray[opIndex]);
+  await page.render(params).promise;
   const data=await canvasToPng(canvas);
   canvas.width=1;canvas.height=1;
   return{data,pixelWidth:viewport.width,pixelHeight:viewport.height,widthPt:baseViewport.width,heightPt:baseViewport.height};
 }
 async function makeDocx(){
   if(!analysis||analysisKey!==optionKey())await analyzeDocument();
-  const outputMode=mode();const title=safeBaseName(file.name);const zip=new JSZip();let pages;
+  const outputMode=mode();const title=safeBaseName(file.name);const zip=new JSZip();let pages=[];
   if(outputMode==='layout'){
-    pages=[];
     for(let i=0;i<analysis.pages.length;i++){
-      const info=analysis.pages[i],page=await pdf.getPage(info.pageNumber),rendered=await renderLayoutPage(page,info.pageNumber,i,analysis.pages.length);
+      const info=analysis.pages[i],page=await pdf.getPage(info.pageNumber),rendered=await renderPageImage(page,info.pageNumber,i,analysis.pages.length);
       const imageName=`page-${String(i+1).padStart(3,'0')}.png`,imageRelId=`rIdImage${i+1}`;
       pages.push({pageNumber:info.pageNumber,widthPt:rendered.widthPt,heightPt:rendered.heightPt,imagePixelWidth:rendered.pixelWidth,imagePixelHeight:rendered.pixelHeight,imageName,imageRelId,imageData:rendered.data});
     }
     const parts=buildDocxParts(pages,title,{mode:'layout'});for(const[path,content]of Object.entries(parts))zip.file(path,content);
     for(const p of pages)zip.file(`word/media/${p.imageName}`,p.imageData,{binary:true});
+  }else if(outputMode==='hybrid'){
+    for(let i=0;i<analysis.pages.length;i++){
+      const info=analysis.pages[i];let visual={};
+      if(info.visuals.hasVisuals){
+        const page=await pdf.getPage(info.pageNumber),rendered=await renderPageImage(page,info.pageNumber,i,analysis.pages.length,{graphicsOnly:true});
+        visual={imagePixelWidth:rendered.pixelWidth,imagePixelHeight:rendered.pixelHeight,imageName:`visual-${String(i+1).padStart(3,'0')}.png`,imageRelId:`rIdImage${i+1}`,imageData:rendered.data};
+      }
+      pages.push({pageNumber:info.pageNumber,paragraphs:info.paragraphs,label:$('#pageLabels').checked?`PDF page ${info.pageNumber}`:'',widthPt:info.widthPt,heightPt:info.heightPt,...visual});
+    }
+    const parts=buildDocxParts(pages,title,{mode:'hybrid'});for(const[path,content]of Object.entries(parts))zip.file(path,content);
+    for(const p of pages)if(p.imageData)zip.file(`word/media/${p.imageName}`,p.imageData,{binary:true});
   }else{
     pages=analysis.pages.map(p=>({paragraphs:p.paragraphs,label:$('#pageLabels').checked?`PDF page ${p.pageNumber}`:'',widthPt:p.widthPt,heightPt:p.heightPt}));
     const parts=buildDocxParts(pages,title,{mode:'editable'});for(const[path,content]of Object.entries(parts))zip.file(path,content);
@@ -140,9 +161,10 @@ async function makeDocx(){
   const check=await JSZip.loadAsync(blob);if(!check.file('word/document.xml')||!check.file('[Content_Types].xml'))throw Error('The Word package could not be verified.');
   const documentXml=await check.file('word/document.xml').async('string');if(!documentXml.includes('<w:document'))throw Error('The Word document structure could not be verified.');
   if(outputMode==='layout'&&!check.file('word/media/page-001.png'))throw Error('The layout-preserved Word package is missing its page images.');
+  if(outputMode==='hybrid'&&analysis.visualPages&&!check.file('word/media/visual-001.png')&&!pages.some((p,i)=>check.file(`word/media/visual-${String(i+1).padStart(3,'0')}.png`)))throw Error('The hybrid Word package is missing its visual layer.');
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=title+'-converted.docx';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
   setProgress('Word document created.',100);
-  msg(outputMode==='layout'?'Layout-preserved DOCX downloaded. Images, diagrams, charts, and page appearance are retained as high-quality page snapshots.':'Editable DOCX downloaded. Quicklio preserved more page sizing, alignment, indentation, and spacing; review complex layouts before relying on them.');
+  msg(outputMode==='layout'?'Layout-preserved DOCX downloaded. Images, diagrams, charts, and page appearance are retained as high-quality page snapshots.':outputMode==='hybrid'?'Hybrid DOCX downloaded. Text remains editable while detected diagrams, images, charts, vector graphics, and other non-text visuals are preserved separately.':'Editable DOCX downloaded. Quicklio preserved page sizing, alignment, indentation, and spacing; review complex layouts before relying on them.');
 }
 $('#convertBtn').addEventListener('click',async()=>{try{$('#convertBtn').disabled=true;await makeDocx()}catch(e){msg(e?.message||'Could not create the Word document.',true);setProgress('Conversion stopped.')}finally{$('#convertBtn').disabled=false}});
 refreshModeHelp();

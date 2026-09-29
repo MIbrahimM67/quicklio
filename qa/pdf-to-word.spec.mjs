@@ -13,6 +13,7 @@ test('PDF to Word analyzes selectable text and downloads editable DOCX',async({p
   await expect(page.locator('h1')).toHaveText('PDF to Word Converter');
   await page.locator('#pdfInput').setInputFiles({name:'report.pdf',mimeType:'application/pdf',buffer:await samplePdf()});
   await expect(page.locator('#fileMeta')).toContainText('2 pages');
+  await page.locator('#conversionMode').selectOption('editable');
   await page.locator('#range').fill('1');
   await page.locator('#analyzeBtn').click();
   await expect(page.locator('#results')).toBeVisible();
@@ -25,6 +26,22 @@ test('PDF to Word analyzes selectable text and downloads editable DOCX',async({p
   const path=await download.path();expect(path).toBeTruthy();
   const fs=await import('node:fs');const buf=fs.readFileSync(path);
   expect(buf.length).toBeGreaterThan(500);expect(buf.subarray(0,2).toString()).toBe('PK');
+});
+
+test('PDF to Word hybrid mode keeps editable text and embeds non-text visuals',async({page})=>{
+  await page.goto('/en/pdf/pdf-to-word/');
+  await page.locator('#pdfInput').setInputFiles({name:'hybrid-report.pdf',mimeType:'application/pdf',buffer:await samplePdf()});
+  await expect(page.locator('#conversionMode')).toHaveValue('hybrid');
+  await expect(page.locator('#ocrScans')).toBeEnabled();
+  await page.locator('#range').fill('1');
+  await page.locator('#analyzeBtn').click();
+  await expect(page.locator('#qualityCallout')).toContainText('editable Word text');
+  await expect(page.locator('#previewText')).toContainText('Quarterly Report');
+  const downloadPromise=page.waitForEvent('download');
+  await page.locator('#convertBtn').click();
+  const download=await downloadPromise;const path=await download.path();expect(path).toBeTruthy();
+  const fs=await import('node:fs');const buf=fs.readFileSync(path);const binary=buf.toString('latin1');
+  expect(buf.length).toBeGreaterThan(3000);expect(binary).toContain('word/media/visual-001.png');
 });
 
 test('PDF to Word preserve-layout mode embeds rendered PDF pages as media',async({page})=>{
@@ -47,6 +64,7 @@ test('PDF to Word flags image-only pages and fits mobile',async({page})=>{
   await page.setViewportSize({width:375,height:812});
   await page.goto('/en/pdf/pdf-to-word/');
   await page.locator('#pdfInput').setInputFiles({name:'scan.pdf',mimeType:'application/pdf',buffer:Buffer.from(await d.save())});
+  await page.locator('#conversionMode').selectOption('editable');
   await page.locator('#analyzeBtn').click();
   await expect(page.locator('#qualityList')).toContainText('No selectable text');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2)).toBeTruthy();
