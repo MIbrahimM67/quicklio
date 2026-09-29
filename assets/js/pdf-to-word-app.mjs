@@ -93,7 +93,7 @@ function renderAnalysis(){
   const list=$('#qualityList');list.innerHTML='';
   for(const p of a.pages){
     const li=document.createElement('li');
-    const state=layout?'Layout will be preserved':hybrid?(p.visuals.hasVisuals?'Editable text + visual layer':'Editable text'):p.usedOcr?'OCR used':p.diag.scannedLikely?'No selectable text':p.diag.complexLayout?'Review layout':'Good text extraction';
+    const state=layout?'Layout will be preserved':hybrid?(p.usedOcr?(p.visuals.hasVisuals?'OCR + visual layer':'OCR used'):p.diag.scannedLikely?'No selectable text':p.visuals.hasVisuals?'Editable text + visual layer':p.diag.complexLayout?'Editable text · review layout':'Editable text'):p.usedOcr?'OCR used':p.diag.scannedLikely?'No selectable text':p.diag.complexLayout?'Review layout':'Good text extraction';
     const visual=p.visuals.hasVisuals?` · ${p.visuals.images?`${p.visuals.images} image object${p.visuals.images===1?'':'s'}`:'graphics detected'}`:'';
     li.innerHTML=`<strong>Page ${p.pageNumber}</strong><span>${state}</span><small>${p.diag.charCount.toLocaleString()} selectable characters${p.diag.complexLayout?' · possible columns/tables':''}${visual}</small>`;list.append(li);
   }
@@ -124,7 +124,13 @@ async function renderPageImage(page,pageNumber,index,count,{graphicsOnly=false}=
   setProgress(`${graphicsOnly?'Capturing visuals':'Rendering layout'} on page ${pageNumber}…`,5+index/count*86);
   const blocked=textPaintOps();
   const params={canvasContext:ctx,viewport};
-  if(graphicsOnly)params.operationsFilter=(opIndex,operatorList)=>!blocked.has(operatorList.fnArray[opIndex]);
+  if(graphicsOnly){
+    const cachedOperatorList=await page.getOperatorList();
+    params.operationsFilter=(opIndex,operatorList)=>{
+      const list=operatorList?.fnArray?operatorList:cachedOperatorList;
+      return!blocked.has(list?.fnArray?.[opIndex]);
+    };
+  }
   await page.render(params).promise;
   const data=await canvasToPng(canvas);
   canvas.width=1;canvas.height=1;
