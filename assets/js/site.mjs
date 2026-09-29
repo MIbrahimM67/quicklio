@@ -366,7 +366,7 @@ for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
   document.querySelector('.tool-hero')?.before(breadcrumb);
 
   const graph=[
-    {'@type':'WebApplication','@id':canonical+'#app',name:h1,url:canonical,description:description||undefined,applicationCategory,operatingSystem:'Any',isAccessibleForFree:true,browserRequirements:'Requires a modern web browser with JavaScript enabled',offers:{'@type':'Offer',price:'0',priceCurrency:'USD'},publisher:{'@type':'Organization','@id':'https://quicklio.app/#organization','name':'Quicklio','url':'https://quicklio.app/'}},
+    {'@type':'WebPage','@id':canonical+'#webpage',name:h1,url:canonical,description:description||undefined,isPartOf:{'@type':'WebSite','@id':'https://quicklio.app/#website'},publisher:{'@type':'Organization','@id':'https://quicklio.app/#organization','name':'Quicklio','url':'https://quicklio.app/'}},
     {'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:c.url}))}
   ];
   const schema=document.createElement('script');

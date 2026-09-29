@@ -90,6 +90,12 @@ test('PDF hub links to every PDF tool in the sitemap',()=>{
   for(const url of urls)assert.ok(html.includes('href=\"'+url+'\"'),'PDF hub is missing tool link: '+url);
 });
 
+test('image hub links to every image tool in the sitemap',()=>{
+  const html=fs.readFileSync('en/images/index.html','utf8');
+  const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/images\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/images/');
+  for(const url of urls)assert.ok(html.includes('href=\"'+url+'\"'),'Image hub is missing tool link: '+url);
+});
+
 test('homepage declares site identity and a Google-compatible favicon',()=>{
   const html=fs.readFileSync('index.html','utf8');
   assert.match(html,/rel="icon"[^>]+quicklio-favicon\.png/);
@@ -100,7 +106,7 @@ test('homepage declares site identity and a Google-compatible favicon',()=>{
 
 test('tool schema generator stays enabled',()=>{
   const js=fs.readFileSync('assets/js/site.mjs','utf8');
-  assert.match(js,/WebApplication/);
+  assert.match(js,/WebPage/);
   assert.match(js,/BreadcrumbList/);
   assert.match(js,/quicklio-tool-schema/);
 });
@@ -110,4 +116,21 @@ test('homepage exposes AdSense ownership verification and ads.txt is valid',()=>
   const ads=fs.readFileSync('ads.txt','utf8').trim();
   assert.match(html,/<meta name="google-adsense-account" content="ca-pub-2036385623191798">/);
   assert.equal(ads,'google.com, pub-2036385623191798, DIRECT, f08c47fec0942fa0');
+});
+
+
+test('software app schema requires real review evidence',()=>{
+  for(const file of htmlFiles){
+    const html=fs.readFileSync(file,'utf8');
+    for(const block of jsonLdBlocks(html)){
+      const data=JSON.parse(block);
+      const nodes=data?.['@graph']||[data];
+      for(const node of nodes){
+        const types=Array.isArray(node?.['@type'])?node['@type']:[node?.['@type']];
+        if(!types.includes('WebApplication')&&!types.includes('SoftwareApplication'))continue;
+        assert.ok(node?.offers&&node.offers.price!==undefined,file+' software app schema is missing offers.price');
+        assert.ok(node?.review||node?.aggregateRating,file+' software app schema must have a real review or aggregateRating');
+      }
+    }
+  }
 });
