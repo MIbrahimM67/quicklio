@@ -77,6 +77,19 @@ test('static JSON-LD blocks are valid JSON',()=>{
   }
 });
 
+test('homepage links to every current tool in the sitemap',()=>{
+  const html=fs.readFileSync('index.html','utf8');
+  const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/[^<]+)<\/loc>/g)].map(match=>match[1]);
+  const toolPaths=urls.filter(url=>url.split('/').filter(Boolean).length>=3);
+  for(const url of toolPaths)assert.ok(html.includes('href=\"'+url+'\"'),'Homepage is missing tool link: '+url);
+});
+
+test('PDF hub links to every PDF tool in the sitemap',()=>{
+  const html=fs.readFileSync('en/pdf/index.html','utf8');
+  const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/pdf\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/pdf/');
+  for(const url of urls)assert.ok(html.includes('href=\"'+url+'\"'),'PDF hub is missing tool link: '+url);
+});
+
 test('homepage declares site identity and a Google-compatible favicon',()=>{
   const html=fs.readFileSync('index.html','utf8');
   assert.match(html,/rel="icon"[^>]+quicklio-favicon\.png/);
