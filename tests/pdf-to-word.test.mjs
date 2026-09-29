@@ -49,3 +49,14 @@ test('layout docx references page images and png content type',()=>{
   const xml=buildDocumentXml(pages,{mode:'layout'});const parts=buildDocxParts(pages,'Layout Test',{mode:'layout'});
   assert.match(xml,/<w:drawing>/);assert.match(xml,/r:embed="rIdImage1"/);assert.match(parts['[Content_Types].xml'],/Extension="png" ContentType="image\/png"/);assert.match(parts['word/_rels/document.xml.rels'],/Target="media\/page-001.png"/);assert.match(parts['docProps/core.xml'],/Layout Test/);
 });
+
+test('hybrid docx keeps editable text and a behind-text visual layer',()=>{
+  const pages=[{pageNumber:1,widthPt:612,heightPt:792,paragraphs:[{text:'Editable report text',fontSize:11,align:'left'}],imagePixelWidth:1020,imagePixelHeight:1320,imageName:'visual-001.png',imageRelId:'rIdImage1'}];
+  const xml=buildDocumentXml(pages,{mode:'hybrid'});const parts=buildDocxParts(pages,'Hybrid Test',{mode:'hybrid'});
+  assert.match(xml,/Editable report text/);
+  assert.match(xml,/wp:anchor/);
+  assert.match(xml,/behindDoc="1"/);
+  assert.match(xml,/r:embed="rIdImage1"/);
+  assert.match(parts['[Content_Types].xml'],/Extension="png" ContentType="image\/png"/);
+  assert.match(parts['word/_rels/document.xml.rels'],/Target="media\/visual-001.png"/);
+});
