@@ -1,0 +1,129 @@
+name: One-time SEO discovery cleanup
+
+on:
+  push:
+    branches:
+      - seo/discovery-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/discovery-cleanup
+          fetch-depth: 0
+
+      - name: Patch static discovery and technical SEO links
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          def insert_after_pattern(text, pattern, addition, unique):
+              if unique in text:
+                  return text
+              match = re.search(pattern, text, flags=re.S)
+              if not match:
+                  raise SystemExit(f'Could not find insertion target: {pattern}')
+              return text[:match.end()] + addition + text[match.end():]
+
+          # Replace crawlable query-state links with real collection hubs wherever a real hub exists.
+          static_replacements = {
+              'href="/?category=image#tools"': 'href="/en/images/"',
+              'href="/?category=pdf#tools"': 'href="/en/pdf/"',
+              'href="/?category=crafts#tools"': 'href="/en/crafts/"',
+          }
+          for path in Path('.').rglob('index.html'):
+              text = path.read_text(encoding='utf-8')
+              new = text
+              for old, replacement in static_replacements.items():
+                  new = new.replace(old, replacement)
+              if new != text:
+                  path.write_text(new, encoding='utf-8')
+
+          home_path = Path('index.html')
+          home = home_path.read_text(encoding='utf-8')
+          home = home.replace('30 current tools', '33 current tools')
+
+          mega_logo = '<a class="mega-link" href="/en/images/remove-background-from-logo/" data-mega-cat="image"><span class="mega-icon"><svg class="icon icon-md" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-image"></use></svg></span><span><strong>Logo Background Remover</strong><small>Remove white or solid logo backgrounds into transparent PNG.</small></span></a>'
+          mega_word = '<a class="mega-link" href="/en/pdf/pdf-to-word/" data-mega-cat="pdf"><span class="mega-icon"><svg class="icon icon-md" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-file-text"></use></svg></span><span><strong>PDF to Word</strong><small>Create an editable DOCX with scan detection and optional OCR.</small></span></a>'
+          mega_boxes = '<a class="mega-link" href="/en/pdf/pdf-page-box-editor/" data-mega-cat="pdf"><span class="mega-icon"><svg class="icon icon-md" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-scan-line"></use></svg></span><span><strong>PDF Page Box Editor</strong><small>Inspect and edit TrimBox, BleedBox, CropBox, MediaBox, and ArtBox.</small></span></a>'
+          card_logo = '<a class="tool-card" data-tool-card data-category="image" data-search="logo background remover transparent png white solid remove background logo" href="/en/images/remove-background-from-logo/"><span class="tool-card-icon"><svg class="icon icon-xl" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-image"></use></svg></span><span class="tool-card-copy"><h3>Logo Background Remover</h3><p>Remove white or solid logo backgrounds into a transparent PNG.</p></span><span class="tool-card-arrow"><svg class="icon" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-arrow-right"></use></svg></span></a>'
+          card_word = '<a class="tool-card" data-tool-card data-category="pdf" data-search="pdf to word docx editable private no upload ocr scanned convert pdf word" href="/en/pdf/pdf-to-word/"><span class="tool-card-icon"><svg class="icon icon-xl" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-file-text"></use></svg></span><span class="tool-card-copy"><h3>PDF to Word</h3><p>Create an editable DOCX with scan detection and optional OCR.</p></span><span class="tool-card-arrow"><svg class="icon" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-arrow-right"></use></svg></span></a>'
+          card_boxes = '<a class="tool-card" data-tool-card data-category="pdf" data-search="pdf page box editor trimbox bleedbox cropbox mediabox artbox prepress" href="/en/pdf/pdf-page-box-editor/"><span class="tool-card-icon"><svg class="icon icon-xl" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-scan-line"></use></svg></span><span class="tool-card-copy"><h3>PDF Page Box Editor</h3><p>Inspect and edit PDF trim, bleed, crop, media, and art boxes.</p></span><span class="tool-card-arrow"><svg class="icon" aria-hidden="true"><use href="/assets/icons/lucide.svg#i-arrow-right"></use></svg></span></a>'
+
+          home = insert_after_pattern(home, r'<a class="mega-link" href="/en/images/resize-image-to-exact-kb/".*?</a>', mega_logo, 'class="mega-link" href="/en/images/remove-background-from-logo/"')
+          home = insert_after_pattern(home, r'<a class="mega-link" href="/en/pdf/pdf-to-jpg/".*?</a>', mega_word, 'class="mega-link" href="/en/pdf/pdf-to-word/"')
+          home = insert_after_pattern(home, r'<a class="mega-link" href="/en/pdf/online-pdf-editor/".*?</a>', mega_boxes, 'class="mega-link" href="/en/pdf/pdf-page-box-editor/"')
+          home = insert_after_pattern(home, r'<a class="tool-card"[^>]*href="/en/pdf/pdf-to-jpg/".*?</a>', card_word, 'class="tool-card" data-tool-card data-category="pdf" data-search="pdf to word')
+          home = insert_after_pattern(home, r'<a class="tool-card"[^>]*href="/en/pdf/online-pdf-editor/".*?</a>', card_boxes, 'data-search="pdf page box editor')
+          home = insert_after_pattern(home, r'<a class="tool-card"[^>]*href="/en/images/resize-image-to-exact-kb/".*?</a>', card_logo, 'data-search="logo background remover')
+          home_path.write_text(home, encoding='utf-8')
+
+          hub_path = Path('en/pdf/index.html')
+          hub = hub_path.read_text(encoding='utf-8')
+          hub = hub.replace('14 tools in this collection', '16 tools in this collection')
+
+          # Update CollectionPage ItemList JSON-LD from visible hub inventory.
+          schema_match = re.search(r'<script type="application/ld\+json">(\{.*?"@type":"CollectionPage".*?\})</script>', hub, flags=re.S)
+          if not schema_match:
+              raise SystemExit('PDF hub CollectionPage JSON-LD not found')
+          schema = json.loads(schema_match.group(1))
+          items = schema['mainEntity']['itemListElement']
+          existing_urls = {item.get('url') for item in items}
+          additions = [
+              ('PDF to Word Converter', 'https://quicklio.app/en/pdf/pdf-to-word/'),
+              ('PDF Page Box Editor', 'https://quicklio.app/en/pdf/pdf-page-box-editor/'),
+          ]
+          for name, url in additions:
+              if url not in existing_urls:
+                  items.append({'@type':'ListItem','position':len(items)+1,'name':name,'url':url})
+          schema_json = json.dumps(schema, ensure_ascii=False, separators=(',', ':'))
+          hub = hub[:schema_match.start(1)] + schema_json + hub[schema_match.end(1):]
+
+          hub = insert_after_pattern(hub, r'<a class="mega-link" href="/en/pdf/pdf-to-jpg/".*?</a>', mega_word, 'class="mega-link" href="/en/pdf/pdf-to-word/"')
+          hub = insert_after_pattern(hub, r'<a class="mega-link" href="/en/pdf/online-pdf-editor/".*?</a>', mega_boxes, 'class="mega-link" href="/en/pdf/pdf-page-box-editor/"')
+          hub = insert_after_pattern(hub, r'<a class="tool-card"[^>]*href="/en/pdf/pdf-to-jpg/".*?</a>', card_word, 'data-search="pdf to word')
+          hub = insert_after_pattern(hub, r'<a class="tool-card"[^>]*href="/en/pdf/online-pdf-editor/".*?</a>', card_boxes, 'data-search="pdf page box editor')
+          hub = hub.replace('converting between PDFs and images', 'converting PDFs to editable Word documents or images')
+          hub = hub.replace('Use Merge PDF when several files need to become one document, Split PDF when you need selected pages, Compress PDF for image-heavy files, Online PDF Editor for annotations and page work, and the print-specific tools when the problem is bleed, gutters, booklet signatures, or label sizing.', 'Use Merge PDF when several files need to become one document, Split PDF when you need selected pages, Compress PDF for image-heavy files, PDF to Word when you need editable DOCX text, Online PDF Editor for annotations and page work, PDF Page Box Editor for TrimBox/BleedBox metadata, and the print-specific tools when the problem is bleed, gutters, booklet signatures, or label sizing.')
+          hub_path.write_text(hub, encoding='utf-8')
+
+          # Add regression tests so future tool launches cannot silently miss discovery surfaces.
+          test_path = Path('tests/seo.test.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          marker = "test('homepage declares site identity and a Google-compatible favicon',()=>{"
+          discovery_test = """test('homepage links to every current tool in the sitemap',()=>{\n  const html=fs.readFileSync('index.html','utf8');\n  const urls=[...sitemap.matchAll(/<loc>https:\\/\\/quicklio\\.app(\\/en\\/[^<]+)<\\/loc>/g)].map(match=>match[1]);\n  const toolPaths=urls.filter(url=>url.split('/').filter(Boolean).length>=3);\n  for(const url of toolPaths)assert.ok(html.includes('href=\\\"'+url+'\\\"'),'Homepage is missing tool link: '+url);\n});\n\ntest('PDF hub links to every PDF tool in the sitemap',()=>{\n  const html=fs.readFileSync('en/pdf/index.html','utf8');\n  const urls=[...sitemap.matchAll(/<loc>https:\\/\\/quicklio\\.app(\\/en\\/pdf\\/[^<]+)<\\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/pdf/');\n  for(const url of urls)assert.ok(html.includes('href=\\\"'+url+'\\\"'),'PDF hub is missing tool link: '+url);\n});\n\n"""
+          if "homepage links to every current tool in the sitemap" not in tests:
+              tests = tests.replace(marker, discovery_test + marker)
+              test_path.write_text(tests, encoding='utf-8')
+
+          # Sanity checks before committing.
+          final_home = home_path.read_text(encoding='utf-8')
+          final_hub = hub_path.read_text(encoding='utf-8')
+          assert '33 current tools' in final_home
+          for route in ['/en/images/remove-background-from-logo/','/en/pdf/pdf-to-word/','/en/pdf/pdf-page-box-editor/']:
+              assert route in final_home
+          for route in ['/en/pdf/pdf-to-word/','/en/pdf/pdf-page-box-editor/']:
+              assert route in final_hub
+          assert '/?category=pdf#tools' not in ''.join(p.read_text(encoding='utf-8') for p in Path('.').rglob('index.html'))
+          PY
+
+      - name: Run unit and SEO tests
+        run: npm test
+
+      - name: Commit cleanup and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/seo-discovery-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix tool discovery and canonical hub links"
+          git push origin HEAD:seo/discovery-cleanup
