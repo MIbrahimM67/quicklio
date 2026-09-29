@@ -167,25 +167,33 @@ function sectionProps(page={},layout=false){
   return`<w:sectPr><w:pgSz w:w="${width}" w:h="${height}"/><w:pgMar w:top="${margin}" w:right="${margin}" w:bottom="${margin}" w:left="${margin}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>`;
 }
 
-function imageParagraphXml(page,index){
-  const marginPt=6;
+function pictureXml(page,index,{background=false}={}){
   const pageW=Math.max(72,Number(page.widthPt)||612),pageH=Math.max(72,Number(page.heightPt)||792);
-  const availW=Math.max(36,pageW-marginPt*2),availH=Math.max(36,pageH-marginPt*2);
-  const sourceW=Math.max(1,Number(page.imagePixelWidth)||availW),sourceH=Math.max(1,Number(page.imagePixelHeight)||availH);
-  const scale=Math.min(availW/sourceW,availH/sourceH);
-  const widthPt=sourceW*scale,heightPt=sourceH*scale;
+  const sourceW=Math.max(1,Number(page.imagePixelWidth)||pageW),sourceH=Math.max(1,Number(page.imagePixelHeight)||pageH);
+  const id=index+1,rel=escapeXml(page.imageRelId||`rIdImage${id}`),name=escapeXml(page.imageName||`page-${id}.png`);
+  let widthPt,heightPt;
+  if(background){widthPt=pageW;heightPt=pageH}else{
+    const marginPt=6,availW=Math.max(36,pageW-marginPt*2),availH=Math.max(36,pageH-marginPt*2),scale=Math.min(availW/sourceW,availH/sourceH);
+    widthPt=sourceW*scale;heightPt=sourceH*scale;
+  }
   const cx=Math.max(1,Math.round(widthPt*12700)),cy=Math.max(1,Math.round(heightPt*12700));
-  const id=index+1,rel=escapeXml(page.imageRelId||`rIdImage${id}`);
-  return`<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${id}" name="PDF page ${escapeXml(page.pageNumber||id)}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${escapeXml(page.imageName||`page-${id}.png`)}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rel}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+  const pic=`<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rel}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>`;
+  if(background){
+    return`<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr><w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="0" behindDoc="1" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${1000+id}" name="PDF visual layer ${escapeXml(page.pageNumber||id)}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>${pic}</wp:anchor></w:drawing></w:r></w:p>`;
+  }
+  return`<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${id}" name="PDF page ${escapeXml(page.pageNumber||id)}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>${pic}</wp:inline></w:drawing></w:r></w:p>`;
 }
 
 export function buildDocumentXml(pages=[],options={}){
-  const mode=options.mode==='layout'?'layout':'editable';
+  const mode=options.mode==='layout'?'layout':options.mode==='hybrid'?'hybrid':'editable';
   const body=[];
   pages.forEach((page,index)=>{
     if(page.label)body.push(`<w:p><w:pPr><w:pStyle w:val="PageLabel"/></w:pPr><w:r><w:t>${escapeXml(page.label)}</w:t></w:r></w:p>`);
-    if(mode==='layout')body.push(imageParagraphXml(page,index));
-    else for(const p of page.paragraphs||[])body.push(paragraphXml(p));
+    if(mode==='layout')body.push(pictureXml(page,index));
+    else{
+      if(mode==='hybrid'&&page.imageName)body.push(pictureXml(page,index,{background:true}));
+      for(const p of page.paragraphs||[])body.push(paragraphXml(p));
+    }
     if(index<pages.length-1)body.push(`<w:p><w:pPr>${sectionProps(page,mode==='layout')}</w:pPr></w:p>`);
   });
   const last=pages.at(-1)||{};
@@ -195,10 +203,11 @@ export function buildDocumentXml(pages=[],options={}){
 }
 
 export function buildDocxParts(pages=[],title='Converted PDF',options={}){
-  const mode=options.mode==='layout'?'layout':'editable';
+  const mode=options.mode==='layout'?'layout':options.mode==='hybrid'?'hybrid':'editable';
   const now=new Date().toISOString();
-  const imageDefaults=mode==='layout'?'<Default Extension="png" ContentType="image/png"/>':'';
-  const imageRels=mode==='layout'?pages.map((p,i)=>`<Relationship Id="${escapeXml(p.imageRelId||`rIdImage${i+1}`)}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${escapeXml(p.imageName||`page-${i+1}.png`)}"/>`).join(''):'';
+  const imagePages=pages.filter(p=>p.imageName);
+  const imageDefaults=imagePages.length?'<Default Extension="png" ContentType="image/png"/>':'';
+  const imageRels=imagePages.map((p,i)=>`<Relationship Id="${escapeXml(p.imageRelId||`rIdImage${i+1}`)}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${escapeXml(p.imageName||`page-${i+1}.png`)}"/>`).join('');
   return{
     '[Content_Types].xml':`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${imageDefaults}<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`,
     '_rels/.rels':`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`,
