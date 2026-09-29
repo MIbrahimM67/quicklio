@@ -36,3 +36,35 @@ test('PDF to Word flags image-only pages and fits mobile',async({page})=>{
   await expect(page.locator('#qualityList')).toContainText('No selectable text');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2)).toBeTruthy();
 });
+
+
+test('PDF to Word keeps the desktop page hierarchy intact',async({page})=>{
+  for(const viewport of [{width:1366,height:768},{width:1706,height:864}]){
+    await page.setViewportSize(viewport);
+    await page.goto('/en/pdf/pdf-to-word/');
+    await expect(page.locator('[data-tool-review-cta]')).toBeVisible();
+    const layout=await page.evaluate(()=>{
+      const box=el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right}};
+      const main=document.querySelector('main');
+      const hero=document.querySelector('.pdfword-hero');
+      const grid=document.querySelector('.pdfword-grid');
+      const copy=document.querySelector('.pdfword-copy');
+      const review=document.querySelector('[data-tool-review-cta]');
+      const cards=[...document.querySelectorAll('.pdfword-copy .content-card')].slice(0,2).map(box);
+      return{mainDisplay:getComputedStyle(main).display,main:box(main),hero:box(hero),grid:box(grid),copy:box(copy),review:box(review),cards,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
+    });
+    expect(layout.mainDisplay).not.toBe('grid');
+    expect(layout.overflow).toBeLessThanOrEqual(2);
+    expect(layout.main.width).toBeGreaterThan(1000);
+    expect(layout.grid.width).toBeGreaterThan(1000);
+    expect(layout.copy.width).toBeGreaterThan(1000);
+    expect(layout.grid.y).toBeGreaterThanOrEqual(layout.hero.bottom-2);
+    expect(layout.copy.y).toBeGreaterThanOrEqual(layout.grid.bottom-2);
+    expect(layout.review.y).toBeGreaterThanOrEqual(layout.copy.bottom-2);
+    expect(layout.review.width).toBeGreaterThan(900);
+    expect(layout.cards).toHaveLength(2);
+    expect(layout.cards[0].width).toBeGreaterThan(450);
+    expect(layout.cards[1].width).toBeGreaterThan(450);
+    expect(Math.abs(layout.cards[0].y-layout.cards[1].y)).toBeLessThanOrEqual(2);
+  }
+});
