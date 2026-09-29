@@ -134,3 +134,15 @@ test('software app schema requires real review evidence',()=>{
     }
   }
 });
+
+
+test('PDF to Word keeps the validated keyword map on one canonical page',()=>{
+  const html=fs.readFileSync('en/pdf/pdf-to-word/index.html','utf8').toLowerCase();
+  assert.match(html,/<title>[^<]*pdf to word converter/);
+  assert.match(html,/convert scanned pdf to word with ocr/);
+  assert.match(html,/make pdf text editable in word/);
+  assert.match(html,/is this pdf to word converter free\?/);
+  assert.match(html,/does quicklio upload my pdf\?/);
+  assert.ok(!sitemap.includes('pdf-to-word-online'),'Do not split PDF to Word synonyms into doorway URLs');
+  assert.ok(!sitemap.includes('pdf-to-docx'),'Do not split PDF to DOCX into a duplicate tool URL');
+});
