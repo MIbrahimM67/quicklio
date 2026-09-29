@@ -1,0 +1,90 @@
+name: One-time PDF to Word layout repair
+
+on:
+  push:
+    branches:
+      - fix/pdf-to-word-layout
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/pdf-to-word-layout
+          fetch-depth: 0
+
+      - name: Repair page hierarchy and add desktop regression QA
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path=Path('en/pdf/pdf-to-word/index.html')
+          html=html_path.read_text(encoding='utf-8')
+          old='<main class="pdfword-shell tool-workbench">'
+          new='<main class="pdfword-shell">'
+          if old not in html:
+              raise SystemExit('Expected broken main class not found')
+          html=html.replace(old,new,1)
+          html_path.write_text(html,encoding='utf-8')
+
+          qa_path=Path('qa/pdf-to-word.spec.mjs')
+          qa=qa_path.read_text(encoding='utf-8')
+          test_name="PDF to Word keeps the desktop page hierarchy intact"
+          if test_name not in qa:
+              qa += r'''
+
+test('PDF to Word keeps the desktop page hierarchy intact',async({page})=>{
+  for(const viewport of [{width:1366,height:768},{width:1706,height:864}]){
+    await page.setViewportSize(viewport);
+    await page.goto('/en/pdf/pdf-to-word/');
+    await expect(page.locator('[data-tool-review-cta]')).toBeVisible();
+    const layout=await page.evaluate(()=>{
+      const box=el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right}};
+      const main=document.querySelector('main');
+      const hero=document.querySelector('.pdfword-hero');
+      const grid=document.querySelector('.pdfword-grid');
+      const copy=document.querySelector('.pdfword-copy');
+      const review=document.querySelector('[data-tool-review-cta]');
+      const cards=[...document.querySelectorAll('.pdfword-copy .content-card')].slice(0,2).map(box);
+      return{
+        mainDisplay:getComputedStyle(main).display,
+        main:box(main),hero:box(hero),grid:box(grid),copy:box(copy),review:box(review),cards,
+        overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth
+      };
+    });
+    expect(layout.mainDisplay).not.toBe('grid');
+    expect(layout.overflow).toBeLessThanOrEqual(2);
+    expect(layout.main.width).toBeGreaterThan(1000);
+    expect(layout.grid.width).toBeGreaterThan(1000);
+    expect(layout.copy.width).toBeGreaterThan(1000);
+    expect(layout.grid.y).toBeGreaterThanOrEqual(layout.hero.bottom-2);
+    expect(layout.copy.y).toBeGreaterThanOrEqual(layout.grid.bottom-2);
+    expect(layout.review.y).toBeGreaterThanOrEqual(layout.copy.bottom-2);
+    expect(layout.review.width).toBeGreaterThan(900);
+    expect(layout.cards).toHaveLength(2);
+    expect(layout.cards[0].width).toBeGreaterThan(450);
+    expect(layout.cards[1].width).toBeGreaterThan(450);
+    expect(Math.abs(layout.cards[0].y-layout.cards[1].y)).toBeLessThanOrEqual(2);
+  }
+});
+'''
+          qa_path.write_text(qa,encoding='utf-8')
+          PY
+
+      - name: Run unit and SEO tests
+        run: npm test
+
+      - name: Commit repair and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/fix-pdf-word-layout.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix PDF to Word desktop hierarchy and regression QA"
+          git push origin HEAD:fix/pdf-to-word-layout
