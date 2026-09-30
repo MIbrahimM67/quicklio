@@ -72,7 +72,9 @@ async function analyzeDocument(){
     const start=n/selected.length*100,span=100/selected.length;
     setProgress(`Analyzing page ${pageNumber}…`,start);
     const [content,operatorList]=await Promise.all([page.getTextContent(),page.getOperatorList()]);
-    const viewport=page.getViewport({scale:1});const lines=textItemsToLines(content.items);const diag=analyzeTextPage(lines,viewport.width);const visuals=visualSignals(operatorList);
+    const viewport=page.getViewport({scale:1});
+    const lines=textItemsToLines(content.items,viewport.width,content.styles);
+    const diag=analyzeTextPage(lines,viewport.width);const visuals=visualSignals(operatorList);
     let paragraphs=linesToParagraphs(lines,viewport.width),usedOcr=false;
     if(diag.scannedLikely){
       scanCount++;
@@ -95,7 +97,8 @@ function renderAnalysis(){
     const li=document.createElement('li');
     const state=layout?'Layout will be preserved':hybrid?(p.usedOcr?(p.visuals.hasVisuals?'OCR + visual layer':'OCR used'):p.diag.scannedLikely?'No selectable text':p.visuals.hasVisuals?'Editable text + visual layer':p.diag.complexLayout?'Editable text · review layout':'Editable text'):p.usedOcr?'OCR used':p.diag.scannedLikely?'No selectable text':p.diag.complexLayout?'Review layout':'Good text extraction';
     const visual=p.visuals.hasVisuals?` · ${p.visuals.images?`${p.visuals.images} image object${p.visuals.images===1?'':'s'}`:'graphics detected'}`:'';
-    li.innerHTML=`<strong>Page ${p.pageNumber}</strong><span>${state}</span><small>${p.diag.charCount.toLocaleString()} selectable characters${p.diag.complexLayout?' · possible columns/tables':''}${visual}</small>`;list.append(li);
+    const direction=p.diag.rtlLines?` · ${p.diag.rtlLines} RTL line${p.diag.rtlLines===1?'':'s'}`:'';
+    li.innerHTML=`<strong>Page ${p.pageNumber}</strong><span>${state}</span><small>${p.diag.charCount.toLocaleString()} selectable characters${p.diag.complexLayout?' · possible columns/tables':''}${visual}${direction}</small>`;list.append(li);
   }
   const preview=a.pages.flatMap(p=>[`--- Page ${p.pageNumber}${p.usedOcr?' (OCR)':''} ---`,...(p.paragraphs||[]).map(x=>x.text)]).join('\n\n');
   $('#previewText').textContent=preview||'No editable text was found in the selected pages.';
