@@ -68,57 +68,59 @@ function assignRow(row,anchors,pageWidth){
 }
 
 function cellFromLines(lines=[]){
-  if(!lines.length)return{text:'',runs:[],bold:false,italic:false,rtl:false,fontSize:11,sourceLines:[]};
+  if(!lines.length)return{text:'',runs:[],bold:false,italic:false,rtl:false,fontSize:11,sourceLines:[],maxHeightPt:0};
   const sorted=lines.slice().sort((a,b)=>Math.abs(b.y-a.y)>1?b.y-a.y:(a.xMin||0)-(b.xMin||0));
   const runs=[];
   sorted.forEach((line,lineIndex)=>{
     if(lineIndex)runs.push({text:'\n',fontSize:line.fontSize||11,bold:false,italic:false,rtl:line.rtl||false});
     for(const run of line.runs||[{text:line.text,fontSize:line.fontSize,bold:line.bold,italic:line.italic,rtl:line.rtl,fontFamily:line.fontFamily}])runs.push({...run});
   });
-  return{
-    text:sorted.map(l=>l.text).join('\n'),runs,
-    bold:sorted.every(l=>l.bold),italic:sorted.every(l=>l.italic),rtl:sorted.filter(l=>l.rtl).length>sorted.length/2,
-    fontSize:median(sorted.map(l=>Number(l.fontSize)||11))||11,sourceLines:sorted
-  };
+  return{text:sorted.map(l=>l.text).join('\n'),runs,bold:sorted.every(l=>l.bold),italic:sorted.every(l=>l.italic),rtl:sorted.filter(l=>l.rtl).length>sorted.length/2,fontSize:median(sorted.map(l=>Number(l.fontSize)||11))||11,sourceLines:sorted,maxHeightPt:Math.max(...sorted.map(l=>Number(l.boxHeightPt)||Number(l.fontSize)||0))};
 }
 
 function inferEdges(rows,anchors,pageWidth){
   const tolerance=Math.max(15,pageWidth*.038),byColumn=anchors.map(()=>[]);
   for(const row of rows)for(const line of row.lines){const match=nearestColumn(Number(line.xMin)||0,anchors);if(match.index>=0&&match.distance<=tolerance)byColumn[match.index].push(line)}
-  const edges=[];
-  const firstLeft=Math.min(...byColumn[0].map(l=>Number(l.xMin)||anchors[0]),anchors[0]);
-  edges.push(Math.max(0,firstLeft-5));
+  const edges=[];const firstLeft=Math.min(...byColumn[0].map(l=>Number(l.xMin)||anchors[0]),anchors[0]);edges.push(Math.max(0,firstLeft-5));
   for(let i=1;i<anchors.length;i++)edges.push((anchors[i-1]+anchors[i])/2);
-  const last=byColumn.at(-1),lastRight=Math.max(...last.map(l=>Number(l.xMax)||anchors.at(-1)+36),anchors.at(-1)+36);
-  edges.push(Math.min(pageWidth,lastRight+5));
+  const last=byColumn.at(-1),lastRight=Math.max(...last.map(l=>Number(l.xMax)||anchors.at(-1)+36),anchors.at(-1)+36);edges.push(Math.min(pageWidth,lastRight+5));
   return edges;
+}
+
+function inferCellSpans(tableRows,anchors,edges,medianGap){
+  const tolerance=Math.max(6,(medianGap||14)*.28),cols=anchors.length;
+  for(const row of tableRows){
+    for(let c=0;c<cols;c++){
+      const cell=row.cells[c];if(!cell?.text||cell.skip)continue;
+      const maxRight=Math.max(...(cell.sourceLines||[]).map(l=>Number(l.xMax)||edges[c+1]),edges[c]);let span=1;
+      while(c+span<cols&&!row.cells[c+span]?.text&&maxRight>anchors[c+span]-tolerance)span++;
+      if(span>1){cell.gridSpan=span;for(let k=1;k<span;k++)row.cells[c+k].skip=true;}
+    }
+  }
+  if(!Number.isFinite(medianGap)||medianGap<=0)return;
+  for(let r=0;r<tableRows.length-1;r++){
+    for(let c=0;c<cols;c++){
+      const cell=tableRows[r].cells[c];if(!cell?.text||cell.skip||cell.gridSpan>1)continue;
+      const estimatedRows=Math.min(tableRows.length-r,Math.floor((Number(cell.maxHeightPt)||0)/(medianGap*.92)));
+      if(estimatedRows<2)continue;
+      let span=1;for(let k=1;k<estimatedRows;k++){const target=tableRows[r+k].cells[c];if(target?.text||target?.skip)break;span++;}
+      if(span<2)continue;
+      cell.vMerge='restart';for(let k=1;k<span;k++)tableRows[r+k].cells[c].vMerge='continue';
+    }
+  }
 }
 
 function buildTable(rows,anchors,pageWidth,pageHeight){
   const assigned=rows.map(row=>({row,...assignRow(row,anchors,pageWidth)}));
-  const totalLines=rows.reduce((n,r)=>n+r.lines.length,0),misses=assigned.reduce((n,r)=>n+r.misses,0);
-  const coverage=1-misses/Math.max(1,totalLines);
-  const fillRatio=assigned.reduce((n,r)=>n+r.cells.filter(c=>c.length).length,0)/(rows.length*anchors.length);
+  const totalLines=rows.reduce((n,r)=>n+r.lines.length,0),misses=assigned.reduce((n,r)=>n+r.misses,0),coverage=1-misses/Math.max(1,totalLines),fillRatio=assigned.reduce((n,r)=>n+r.cells.filter(c=>c.length).length,0)/(rows.length*anchors.length);
   const rowGaps=[];for(let i=1;i<rows.length;i++)rowGaps.push(rows[i-1].y-rows[i].y);
-  const medianGap=median(rowGaps)||14,deviation=rowGaps.length?median(rowGaps.map(g=>Math.abs(g-medianGap))):0;
-  const regularity=1-clamp(deviation/Math.max(8,medianGap),0,1);
-  const confidence=clamp(.4*coverage+.35*fillRatio+.25*regularity,0,1);
+  const medianGap=median(rowGaps)||14,deviation=rowGaps.length?median(rowGaps.map(g=>Math.abs(g-medianGap))):0,regularity=1-clamp(deviation/Math.max(8,medianGap),0,1),confidence=clamp(.4*coverage+.35*fillRatio+.25*regularity,0,1);
   if(confidence<.78||fillRatio<.68)return null;
-  const edges=inferEdges(rows,anchors,pageWidth);
-  const font=median(rows.flatMap(r=>r.lines.map(l=>Number(l.fontSize)||11)))||11;
-  const topBaseline=Math.max(...rows.map(r=>r.y)),bottomBaseline=Math.min(...rows.map(r=>r.y));
-  const topPt=Math.max(0,pageHeight-topBaseline-font*1.05),bottomPt=Math.min(pageHeight,pageHeight-bottomBaseline+font*.65);
-  const tableRows=assigned.map(({row,cells})=>({y:row.y,cells:cells.map(cellFromLines)}));
-  const nonEmptyCells=tableRows.flatMap(r=>r.cells).filter(c=>c.text);
-  const avgCellChars=nonEmptyCells.length?nonEmptyCells.reduce((n,c)=>n+c.text.replace(/\s+/g,' ').trim().length,0)/nonEmptyCells.length:0;
-  const firstRowBold=tableRows[0].cells.filter(c=>c.text).length>0&&tableRows[0].cells.filter(c=>c.text).every(c=>c.bold);
+  const edges=inferEdges(rows,anchors,pageWidth),font=median(rows.flatMap(r=>r.lines.map(l=>Number(l.fontSize)||11)))||11,topBaseline=Math.max(...rows.map(r=>r.y)),bottomBaseline=Math.min(...rows.map(r=>r.y)),topPt=Math.max(0,pageHeight-topBaseline-font*1.05),bottomPt=Math.min(pageHeight,pageHeight-bottomBaseline+font*.65);
+  const tableRows=assigned.map(({row,cells})=>({y:row.y,cells:cells.map(cellFromLines)}));inferCellSpans(tableRows,anchors,edges,medianGap);
+  const nonEmptyCells=tableRows.flatMap(r=>r.cells).filter(c=>c.text&&!c.skip),avgCellChars=nonEmptyCells.length?nonEmptyCells.reduce((n,c)=>n+c.text.replace(/\s+/g,' ').trim().length,0)/nonEmptyCells.length:0,firstRowBold=tableRows[0].cells.filter(c=>c.text&&!c.skip).length>0&&tableRows[0].cells.filter(c=>c.text&&!c.skip).every(c=>c.bold);
   if(anchors.length===2&&!firstRowBold&&avgCellChars>32)return null;
-  return{
-    rows:tableRows,columns:anchors.length,columnAnchors:anchors,
-    columnWidthsPt:anchors.map((_,i)=>Math.max(24,edges[i+1]-edges[i])),
-    xPt:edges[0],yTopPt:topPt,widthPt:Math.max(48,edges.at(-1)-edges[0]),heightPt:Math.max(font*1.5,bottomPt-topPt),
-    confidence,headerRow:firstRowBold,avgCellChars,sourceLines:rows.flatMap(r=>r.lines)
-  };
+  return{rows:tableRows,columns:anchors.length,columnAnchors:anchors,columnWidthsPt:anchors.map((_,i)=>Math.max(24,edges[i+1]-edges[i])),xPt:edges[0],yTopPt:topPt,widthPt:Math.max(48,edges.at(-1)-edges[0]),heightPt:Math.max(font*1.5,bottomPt-topPt),confidence,headerRow:firstRowBold,avgCellChars,sourceLines:rows.flatMap(r=>r.lines)};
 }
 
 export function detectTables(lines=[],pageWidth=612,pageHeight=792){
@@ -126,5 +128,4 @@ export function detectTables(lines=[],pageWidth=612,pageHeight=792){
   for(const group of groups){const anchors=inferColumns(group,pageWidth);if(!anchors)continue;const table=buildTable(group,anchors,pageWidth,pageHeight);if(table)tables.push(table)}
   return tables;
 }
-
 export function tableSourceLineSet(tables=[]){return new Set(tables.flatMap(t=>t.sourceLines||[]))}
