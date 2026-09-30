@@ -126,6 +126,101 @@ document.addEventListener('pointerdown',(event)=>{
   if(panel)panel.addEventListener('mouseleave',reset);
 })();
 
+/* ── Homepage tool subcategories ── */
+(function(){
+  if(!document.body.classList.contains('site-home'))return;
+  const grid=document.querySelector('.tool-card-grid');
+  const homepageCards=grid?[...grid.querySelectorAll(':scope > [data-tool-card]')]:[];
+  if(!grid||!homepageCards.length||grid.dataset.grouped==='true')return;
+
+  const definitions=[
+    {id:'pdf-essentials',title:'PDF Essentials',description:'Convert, organize, edit, and manage everyday PDF files.'},
+    {id:'print-prepress',title:'Print & Prepress',description:'Prepare PDFs, labels, booklets, and artwork for reliable printing.'},
+    {id:'images-photos',title:'Images & Photos',description:'Edit, resize, prepare, and print images without uploading them.'},
+    {id:'labels-social',title:'Labels & Social',description:'Build printable labels and prepare images for social platforms.'},
+    {id:'crafts-makers',title:'Crafts & Makers',description:'Practical tools for Cricut, yarn, candles, and maker workflows.'},
+    {id:'money-planning',title:'Money & Planning',description:'Simple planning tools for everyday money decisions.'},
+    {id:'seasonal',title:'Seasonal',description:'Useful calculators and creative tools for holidays and events.'}
+  ];
+
+  const printPaths=new Set([
+    '/en/pdf/pdf-page-box-editor/',
+    '/en/pdf/pdf-booklet-signature-maker/',
+    '/en/print/split-image-for-printing/',
+    '/en/pdf/add-bleed-and-crop-marks/',
+    '/en/pdf/resize-shipping-label-to-4x6/',
+    '/en/pdf/add-binding-margin-to-pdf/'
+  ]);
+
+  function groupIdFor(card){
+    const category=card.dataset.category||'';
+    let path='';
+    try{path=new URL(card.getAttribute('href')||'',location.origin).pathname}catch{}
+    if(printPaths.has(path))return'print-prepress';
+    if(category==='pdf')return'pdf-essentials';
+    if(category==='image')return'images-photos';
+    if(category==='labels'||category==='social')return'labels-social';
+    if(category==='crafts'||category==='candle')return'crafts-makers';
+    if(category==='finance')return'money-planning';
+    if(category==='halloween'||category==='christmas')return'seasonal';
+    return'pdf-essentials';
+  }
+
+  grid.dataset.grouped='true';
+  grid.classList.add('is-grouped');
+
+  const jumpNav=document.createElement('nav');
+  jumpNav.className='tool-subcategory-nav';
+  jumpNav.setAttribute('aria-label','Tool subcategories');
+  jumpNav.innerHTML='<span>Jump to</span>';
+  grid.before(jumpNav);
+
+  for(const definition of definitions){
+    const section=document.createElement('section');
+    section.className='tool-subcategory';
+    section.id='tools-'+definition.id;
+    section.dataset.toolGroup=definition.id;
+
+    const head=document.createElement('div');
+    head.className='tool-subcategory-head';
+    head.innerHTML='<div class="tool-subcategory-title"><strong>'+definition.title+'</strong><span>'+definition.description+'</span></div><span class="tool-subcategory-count" data-tool-group-count></span>';
+
+    const inner=document.createElement('div');
+    inner.className='tool-subcategory-grid';
+    for(const card of homepageCards)if(groupIdFor(card)===definition.id)inner.append(card);
+    if(!inner.children.length)continue;
+
+    section.append(head,inner);
+    grid.append(section);
+
+    const jump=document.createElement('a');
+    jump.href='#'+section.id;
+    jump.dataset.toolGroupJump=definition.id;
+    jump.textContent=definition.title;
+    jumpNav.append(jump);
+  }
+
+  const style=document.createElement('style');
+  style.id='quicklio-home-tool-groups-style';
+  style.textContent=`
+    .site-home .tool-card-grid.is-grouped{display:block}
+    .site-home .tool-subcategory-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.15rem 0 1.75rem}
+    .site-home .tool-subcategory-nav>span{font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)}
+    .site-home .tool-subcategory-nav a{display:inline-flex;align-items:center;min-height:2.15rem;padding:.45rem .72rem;border:1px solid var(--color-rule);border-radius:999px;background:rgba(255,255,255,.72);color:var(--color-ink);font-size:.84rem;font-weight:700;text-decoration:none;transition:transform var(--dur-short) var(--ease-out),background var(--dur-short) var(--ease-out),border-color var(--dur-short) var(--ease-out)}
+    .site-home .tool-subcategory-nav a:hover{transform:translateY(-1px);background:#fff;border-color:rgba(17,17,17,.24)}
+    .site-home .tool-subcategory{scroll-margin-top:6rem}
+    .site-home .tool-subcategory+.tool-subcategory{margin-top:2.25rem}
+    .site-home .tool-subcategory-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:.85rem;padding-bottom:.62rem;border-bottom:1px solid var(--color-rule)}
+    .site-home .tool-subcategory-title strong{display:block;font-size:1.18rem;line-height:1.2}
+    .site-home .tool-subcategory-title span{display:block;margin-top:.22rem;color:var(--color-muted);font-size:.88rem;line-height:1.45}
+    .site-home .tool-subcategory-count{flex:0 0 auto;padding:.3rem .55rem;border:1px solid var(--color-rule);border-radius:999px;background:rgba(255,255,255,.6);color:var(--color-muted);font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    .site-home .tool-subcategory-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:.85rem}
+    @media (min-width:42rem){.site-home .tool-subcategory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (min-width:70rem){.site-home .tool-subcategory-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    @media (max-width:41.99rem){.site-home .tool-subcategory-head{align-items:flex-start}.site-home .tool-subcategory-count{margin-top:.05rem}.site-home .tool-subcategory-title span{max-width:28rem}}
+  `;
+  document.head.append(style);
+})();
 
 const search=document.querySelector('[data-tool-search]');
 const cards=[...document.querySelectorAll('[data-tool-card]')];
@@ -147,6 +242,19 @@ function applyToolFilter(){
     card.hidden=!show;
     if(show)visible++;
   }
+
+  const groups=[...document.querySelectorAll('[data-tool-group]')];
+  for(const group of groups){
+    const visibleCards=[...group.querySelectorAll('[data-tool-card]')].filter(card=>!card.hidden);
+    group.hidden=visibleCards.length===0;
+    const count=group.querySelector('[data-tool-group-count]');
+    if(count)count.textContent=visibleCards.length+' '+(visibleCards.length===1?'tool':'tools');
+  }
+  for(const jump of document.querySelectorAll('[data-tool-group-jump]')){
+    const group=groups.find(item=>item.dataset.toolGroup===jump.dataset.toolGroupJump);
+    jump.hidden=!group||group.hidden;
+  }
+
   const empty=document.querySelector('[data-tools-empty]');
   if(empty)empty.hidden=visible>0;
 }
