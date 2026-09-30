@@ -26,7 +26,7 @@ function fontFlags(name=''){const s=String(name);return{bold:/bold|black|semibol
 function angleDeg(item){const t=item?.transform||[];const a=Number(t[0]),b=Number(t[1]);if(!Number.isFinite(a)||!Number.isFinite(b))return 0;let angle=Math.atan2(b,a)*180/Math.PI;while(angle>180)angle-=360;while(angle<=-180)angle+=360;return angle}
 function charWidth(item){return Math.max(1,Number(item.width)||0)/Math.max(1,String(item.text||'').length)||Math.max(2,(Number(item.fontSize)||10)*.45)}
 function sameRunStyle(a,b){return!!a&&!!b&&a.bold===b.bold&&a.italic===b.italic&&a.rtl===b.rtl&&a.vertAlign===b.vertAlign&&a.href===b.href&&String(a.fontFamily||'')===String(b.fontFamily||'')&&Math.abs((a.fontSize||0)-(b.fontSize||0))<.35}
-function pushRun(runs,run){if(!run?.text)return;const last=runs.at(-1);if(last&&sameRunStyle(last,run))last.text+=run.text;else runs.push({...run})}
+function pushRun(runs,run){if(!run?.text)return;const last=runs.at(-1),positioned=Number.isFinite(Number(run.xStart))||Number.isFinite(Number(last?.xStart));if(last&&!positioned&&sameRunStyle(last,run))last.text+=run.text;else runs.push({...run})}
 function horizontalGap(a,b){return Math.max(0,Math.max((a.x||0)-((b.x||0)+(b.width||0)),(b.x||0)-((a.x||0)+(a.width||0))))}
 
 function annotateScripts(items){
