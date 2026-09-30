@@ -5,10 +5,10 @@ test('homepage groups every tool into task-oriented subcategories',async({page})
   const groups=page.locator('[data-tool-group]');
   await expect(groups).toHaveCount(7);
   await expect(page.locator('[data-tool-card]')).toHaveCount(33);
-  await expect(page.getByText('PDF Essentials',{exact:true})).toBeVisible();
-  await expect(page.getByText('Print & Prepress',{exact:true})).toBeVisible();
-  await expect(page.getByText('Images & Photos',{exact:true})).toBeVisible();
-  await expect(page.getByText('Crafts & Makers',{exact:true})).toBeVisible();
+  await expect(page.locator('[data-tool-group="pdf-essentials"] .tool-subcategory-title strong')).toHaveText('PDF Essentials');
+  await expect(page.locator('[data-tool-group="print-prepress"] .tool-subcategory-title strong')).toHaveText('Print & Prepress');
+  await expect(page.locator('[data-tool-group="images-photos"] .tool-subcategory-title strong')).toHaveText('Images & Photos');
+  await expect(page.locator('[data-tool-group="crafts-makers"] .tool-subcategory-title strong')).toHaveText('Crafts & Makers');
   await expect(page.locator('[data-tool-group-jump]')).toHaveCount(7);
   for(const group of await groups.all())await expect(group.locator('[data-tool-card]').first()).toBeVisible();
 });
