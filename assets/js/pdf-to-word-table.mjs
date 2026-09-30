@@ -109,12 +109,15 @@ function buildTable(rows,anchors,pageWidth,pageHeight){
   const topBaseline=Math.max(...rows.map(r=>r.y)),bottomBaseline=Math.min(...rows.map(r=>r.y));
   const topPt=Math.max(0,pageHeight-topBaseline-font*1.05),bottomPt=Math.min(pageHeight,pageHeight-bottomBaseline+font*.65);
   const tableRows=assigned.map(({row,cells})=>({y:row.y,cells:cells.map(cellFromLines)}));
+  const nonEmptyCells=tableRows.flatMap(r=>r.cells).filter(c=>c.text);
+  const avgCellChars=nonEmptyCells.length?nonEmptyCells.reduce((n,c)=>n+c.text.replace(/\s+/g,' ').trim().length,0)/nonEmptyCells.length:0;
   const firstRowBold=tableRows[0].cells.filter(c=>c.text).length>0&&tableRows[0].cells.filter(c=>c.text).every(c=>c.bold);
+  if(anchors.length===2&&!firstRowBold&&avgCellChars>32)return null;
   return{
     rows:tableRows,columns:anchors.length,columnAnchors:anchors,
     columnWidthsPt:anchors.map((_,i)=>Math.max(24,edges[i+1]-edges[i])),
     xPt:edges[0],yTopPt:topPt,widthPt:Math.max(48,edges.at(-1)-edges[0]),heightPt:Math.max(font*1.5,bottomPt-topPt),
-    confidence,headerRow:firstRowBold,sourceLines:rows.flatMap(r=>r.lines)
+    confidence,headerRow:firstRowBold,avgCellChars,sourceLines:rows.flatMap(r=>r.lines)
   };
 }
 
