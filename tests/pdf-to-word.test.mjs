@@ -22,6 +22,11 @@ test('wrapped lines become paragraphs with layout hints',()=>{
   ],612);
   assert.equal(p[0].align,'center');
   assert.equal(p[1].text,'This is a wrapped sentence.');
+  assert.equal(p[1].layoutText,'This is a wrapped\nsentence.');
+  assert.equal(p[1].layoutXPt,72);
+  assert.equal(p[1].layoutFirstBaselinePt,90);
+  assert.equal(p[1].layoutLastBaselinePt,78);
+  assert.ok(p[1].layoutWidthPt>=188);
   assert.ok(p.at(-1).leftIndentPt>0);
 });
 
@@ -50,13 +55,27 @@ test('layout docx references page images and png content type',()=>{
   assert.match(xml,/<w:drawing>/);assert.match(xml,/r:embed="rIdImage1"/);assert.match(parts['[Content_Types].xml'],/Extension="png" ContentType="image\/png"/);assert.match(parts['word/_rels/document.xml.rels'],/Target="media\/page-001.png"/);assert.match(parts['docProps/core.xml'],/Layout Test/);
 });
 
-test('hybrid docx keeps editable text and a behind-text visual layer',()=>{
-  const pages=[{pageNumber:1,widthPt:612,heightPt:792,paragraphs:[{text:'Editable report text',fontSize:11,align:'left'}],imagePixelWidth:1020,imagePixelHeight:1320,imageName:'visual-001.png',imageRelId:'rIdImage1'}];
+test('hybrid docx keeps editable text, page coordinates, and a behind-text visual layer',()=>{
+  const pages=[{pageNumber:1,widthPt:612,heightPt:792,paragraphs:[{
+    text:'Editable report text',layoutText:'Editable report\ntext',fontSize:11,bold:false,italic:false,lineCount:2,
+    layoutXPt:72,layoutWidthPt:180,layoutFirstBaselinePt:680,layoutLastBaselinePt:666
+  }],imagePixelWidth:1020,imagePixelHeight:1320,imageName:'visual-001.png',imageRelId:'rIdImage1'}];
   const xml=buildDocumentXml(pages,{mode:'hybrid'});const parts=buildDocxParts(pages,'Hybrid Test',{mode:'hybrid'});
-  assert.match(xml,/Editable report text/);
+  assert.match(xml,/Editable report/);
+  assert.match(xml,/<w:br\/><w:t xml:space="preserve">text<\/w:t>/);
+  assert.match(xml,/<w:framePr /);
+  assert.match(xml,/w:hAnchor="page"/);
+  assert.match(xml,/w:vAnchor="page"/);
+  assert.match(xml,/w:x="1440"/);
   assert.match(xml,/wp:anchor/);
   assert.match(xml,/behindDoc="1"/);
   assert.match(xml,/r:embed="rIdImage1"/);
   assert.match(parts['[Content_Types].xml'],/Extension="png" ContentType="image\/png"/);
   assert.match(parts['word/_rels/document.xml.rels'],/Target="media\/visual-001.png"/);
+});
+
+test('hybrid falls back to flowing editable text when coordinates are unavailable',()=>{
+  const xml=buildDocumentXml([{widthPt:612,heightPt:792,paragraphs:[{text:'OCR fallback',fontSize:11,align:'left'}]}],{mode:'hybrid'});
+  assert.match(xml,/OCR fallback/);
+  assert.doesNotMatch(xml,/<w:framePr /);
 });

@@ -84,6 +84,16 @@ function inferAlignment(line,pageWidth){
   return'left';
 }
 
+function addLayoutHints(target,line){
+  const xMin=Number(line.xMin)||0,xMax=Number(line.xMax)||xMin,y=Number(line.y)||0;
+  if(!Array.isArray(target.layoutLines))target.layoutLines=[];
+  target.layoutLines.push(line.text);
+  target.layoutXPt=Number.isFinite(target.layoutXPt)?Math.min(target.layoutXPt,xMin):xMin;
+  target.layoutRightPt=Number.isFinite(target.layoutRightPt)?Math.max(target.layoutRightPt,xMax):xMax;
+  target.layoutFirstBaselinePt=Number.isFinite(target.layoutFirstBaselinePt)?Math.max(target.layoutFirstBaselinePt,y):y;
+  target.layoutLastBaselinePt=Number.isFinite(target.layoutLastBaselinePt)?Math.min(target.layoutLastBaselinePt,y):y;
+}
+
 export function linesToParagraphs(lines=[],pageWidth=612){
   if(!lines.length)return[];
   const baseFont=median(lines.map(l=>l.fontSize))||11;
@@ -110,6 +120,7 @@ export function linesToParagraphs(lines=[],pageWidth=612){
         align:inferAlignment(line,pageWidth),leftIndentPt:Math.max(0,(Number(line.xMin)||0)-baseLeft),
         spaceAfterPt:Math.max(0,vertical-normalGap),lineCount:1
       };
+      addLayoutHints(current,line);
       paragraphs.push(current);
     }else{
       current.text=joinWrapped(current.text,line.text);
@@ -117,9 +128,14 @@ export function linesToParagraphs(lines=[],pageWidth=612){
       current.italic=current.italic&&line.italic;
       current.fontSize=Math.max(current.fontSize,line.fontSize);
       current.lineCount++;
+      addLayoutHints(current,line);
     }
   }
-  return paragraphs;
+  return paragraphs.map(p=>({
+    ...p,
+    layoutText:(p.layoutLines||[p.text]).join('\n'),
+    layoutWidthPt:Math.max(12,(Number(p.layoutRightPt)||0)-(Number(p.layoutXPt)||0))
+  }));
 }
 
 export function analyzeTextPage(lines=[],pageWidth=612){
@@ -147,6 +163,10 @@ function twips(points,fallback=0){
   return Math.round((Number.isFinite(n)?n:fallback)*20);
 }
 
+function runTextXml(text){
+  return String(text??'').split('\n').map((line,index)=>`${index?'<w:br/>':''}<w:t xml:space="preserve">${escapeXml(line)}</w:t>`).join('');
+}
+
 function paragraphXml(p){
   const text=escapeXml(p.text);
   if(!text)return'';
@@ -158,6 +178,29 @@ function paragraphXml(p){
   const spacing=`<w:spacing w:after="${after}"/>`;
   const runProps=[p.bold?'<w:b/>':'',p.italic?'<w:i/>':'',`<w:sz w:val="${size}"/><w:szCs w:val="${size}"/>`].join('');
   return`<w:p><w:pPr>${style}${align}${indent}${spacing}</w:pPr><w:r><w:rPr>${runProps}</w:rPr><w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
+}
+
+function positionedParagraphXml(p,page={}){
+  const text=String(p.layoutText??p.text??'');
+  if(!text.trim())return'';
+  const pageW=Math.max(72,Number(page.widthPt)||612),pageH=Math.max(72,Number(page.heightPt)||792);
+  const fontPt=Math.max(4,Number(p.fontSize)||11);
+  const firstBaseline=Number(p.layoutFirstBaselinePt),lastBaseline=Number(p.layoutLastBaselinePt);
+  if(!Number.isFinite(firstBaseline))return paragraphXml(p);
+  const xPt=Math.max(0,Math.min(pageW-1,Number(p.layoutXPt)||0));
+  const naturalWidth=Math.max(12,Number(p.layoutWidthPt)||pageW-xPt);
+  const widthPt=Math.max(12,Math.min(pageW-xPt,naturalWidth+Math.max(3,fontPt*.35)));
+  const topPt=Math.max(0,Math.min(pageH-fontPt*.8,pageH-firstBaseline-fontPt*.82));
+  const lineCount=Math.max(1,Number(p.lineCount)||text.split('\n').length);
+  const baselineSpan=Number.isFinite(lastBaseline)?Math.max(0,firstBaseline-lastBaseline):0;
+  const observedLineGap=lineCount>1&&baselineSpan>0?baselineSpan/(lineCount-1):fontPt*1.15;
+  const lineHeightPt=Math.max(fontPt*.92,Math.min(fontPt*1.8,observedLineGap||fontPt*1.15));
+  const heightPt=Math.max(fontPt*1.2,baselineSpan+fontPt*1.28);
+  const size=Math.max(18,Math.min(56,Math.round(fontPt*2)));
+  const frame=`<w:framePr w:w="${Math.max(240,twips(widthPt))}" w:h="${Math.max(240,twips(heightPt))}" w:hRule="atLeast" w:wrap="notBeside" w:hAnchor="page" w:vAnchor="page" w:x="${twips(xPt)}" w:y="${twips(topPt)}" w:hSpace="0" w:vSpace="0" w:anchorLock="1"/>`;
+  const spacing=`<w:spacing w:before="0" w:after="0" w:line="${Math.max(180,twips(lineHeightPt))}" w:lineRule="exact"/>`;
+  const runProps=[p.bold?'<w:b/>':'',p.italic?'<w:i/>':'',`<w:sz w:val="${size}"/><w:szCs w:val="${size}"/>`].join('');
+  return`<w:p><w:pPr>${frame}${spacing}</w:pPr><w:r><w:rPr>${runProps}</w:rPr>${runTextXml(text)}</w:r></w:p>`;
 }
 
 function sectionProps(page={},layout=false){
@@ -192,7 +235,7 @@ export function buildDocumentXml(pages=[],options={}){
     if(mode==='layout')body.push(pictureXml(page,index));
     else{
       if(mode==='hybrid'&&page.imageName)body.push(pictureXml(page,index,{background:true}));
-      for(const p of page.paragraphs||[])body.push(paragraphXml(p));
+      for(const p of page.paragraphs||[])body.push(mode==='hybrid'?positionedParagraphXml(p,page):paragraphXml(p));
     }
     if(index<pages.length-1)body.push(`<w:p><w:pPr>${sectionProps(page,mode==='layout')}</w:pPr></w:p>`);
   });
