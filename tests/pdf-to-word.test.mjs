@@ -9,16 +9,42 @@ test('text items group into readable lines',()=>{
     {str:'Hello',transform:[12,0,0,12,10,100],width:28,fontName:'Arial'},
     {str:'world',transform:[12,0,0,12,45,100],width:30,fontName:'Arial'},
     {str:'Next',transform:[12,0,0,12,10,80],width:25,fontName:'Arial-Bold'}
-  ]);
+  ],612);
   assert.equal(lines.length,2);assert.equal(lines[0].text,'Hello world');assert.equal(lines[1].text,'Next');assert.equal(lines[1].bold,true);
+});
+
+test('same-baseline columns are split into independent positioned lines',()=>{
+  const lines=textItemsToLines([
+    {str:'Left column sentence',transform:[11,0,0,11,72,700],width:110,fontName:'Arial'},
+    {str:'Right column sentence',transform:[11,0,0,11,330,700],width:120,fontName:'Arial'},
+    {str:'Left next line',transform:[11,0,0,11,72,684],width:75,fontName:'Arial'},
+    {str:'Right next line',transform:[11,0,0,11,330,684],width:82,fontName:'Arial'}
+  ],612);
+  assert.equal(lines.length,4);
+  assert.equal(lines[0].text,'Left column sentence');assert.equal(lines[1].text,'Right column sentence');
+  assert.equal(lines[0].columnSplit,true);assert.equal(lines[1].columnSplit,true);
+  const p=linesToParagraphs(lines,612);
+  assert.equal(p.length,4);assert.equal(p[0].layoutXPt,72);assert.equal(p[1].layoutXPt,330);
+});
+
+test('mixed inline styles remain distinct runs',()=>{
+  const lines=textItemsToLines([
+    {str:'Revenue ',transform:[11,0,0,11,72,650],width:48,fontName:'Arial'},
+    {str:'up 12%',transform:[11,0,0,11,120,650],width:38,fontName:'Arial-Bold'},
+    {str:' today',transform:[11,0,0,11,158,650],width:34,fontName:'Arial-Italic'}
+  ],612);
+  assert.equal(lines.length,1);assert.equal(lines[0].runs.length,3);
+  assert.equal(lines[0].runs[1].bold,true);assert.equal(lines[0].runs[2].italic,true);
+  const p=linesToParagraphs(lines,612);const xml=buildDocumentXml([{widthPt:612,heightPt:792,paragraphs:p}],{mode:'hybrid'});
+  assert.match(xml,/<w:b\/>[\s\S]*up 12%/);assert.match(xml,/<w:i\/>[\s\S]*today/);
 });
 
 test('wrapped lines become paragraphs with layout hints',()=>{
   const p=linesToParagraphs([
-    {text:'Centered heading',y:120,xMin:210,xMax:402,fontSize:18,bold:true,italic:false,wideGaps:0},
-    {text:'This is a wrapped',y:90,xMin:72,xMax:260,fontSize:10,bold:false,italic:false,wideGaps:0},
-    {text:'sentence.',y:78,xMin:72,xMax:140,fontSize:10,bold:false,italic:false,wideGaps:0},
-    {text:'Indented block',y:50,xMin:110,xMax:220,fontSize:10,bold:false,italic:false,wideGaps:0}
+    {text:'Centered heading',y:120,xMin:210,xMax:402,fontSize:18,bold:true,italic:false,wideGaps:0,runs:[{text:'Centered heading',fontSize:18,bold:true,italic:false}]},
+    {text:'This is a wrapped',y:90,xMin:72,xMax:260,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'This is a wrapped',fontSize:10,bold:false,italic:false}]},
+    {text:'sentence.',y:78,xMin:72,xMax:140,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'sentence.',fontSize:10,bold:false,italic:false}]},
+    {text:'Indented block',y:50,xMin:110,xMax:220,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'Indented block',fontSize:10,bold:false,italic:false}]}
   ],612);
   assert.equal(p[0].align,'center');
   assert.equal(p[1].text,'This is a wrapped sentence.');
@@ -58,11 +84,12 @@ test('layout docx references page images and png content type',()=>{
 test('hybrid docx keeps editable text, page coordinates, and a behind-text visual layer',()=>{
   const pages=[{pageNumber:1,widthPt:612,heightPt:792,paragraphs:[{
     text:'Editable report text',layoutText:'Editable report\ntext',fontSize:11,bold:false,italic:false,lineCount:2,
-    layoutXPt:72,layoutWidthPt:180,layoutFirstBaselinePt:680,layoutLastBaselinePt:666
+    layoutXPt:72,layoutWidthPt:180,layoutFirstBaselinePt:680,layoutLastBaselinePt:666,
+    layoutRunLines:[[{text:'Editable report',fontSize:11,bold:false,italic:false}],[{text:'text',fontSize:11,bold:false,italic:false}]]
   }],imagePixelWidth:1020,imagePixelHeight:1320,imageName:'visual-001.png',imageRelId:'rIdImage1'}];
   const xml=buildDocumentXml(pages,{mode:'hybrid'});const parts=buildDocxParts(pages,'Hybrid Test',{mode:'hybrid'});
   assert.match(xml,/Editable report/);
-  assert.match(xml,/<w:br\/><w:t xml:space="preserve">text<\/w:t>/);
+  assert.match(xml,/<w:r><w:br\/><\/w:r>/);
   assert.match(xml,/<w:framePr /);
   assert.match(xml,/w:hAnchor="page"/);
   assert.match(xml,/w:vAnchor="page"/);
