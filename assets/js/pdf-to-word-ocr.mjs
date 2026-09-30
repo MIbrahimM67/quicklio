@@ -28,8 +28,8 @@ export function ocrBlocksToPositionedParagraphs(blocks=[],renderWidth=0,renderHe
         const text=String(line?.text??'').replace(/\s+/g,' ').trim();const box=line?.bbox;if(!text||!box)continue;
         const x0=Math.max(0,finite(box.x0)),y0=Math.max(0,finite(box.y0)),x1=Math.min(rw,finite(box.x1,rw)),y1=Math.min(rh,finite(box.y1,rh));if(x1<=x0||y1<=y0)continue;
         const baselineRaw=Math.max(finite(line?.baseline?.y0,y1),finite(line?.baseline?.y1,y1));const baselinePx=Math.max(y0,Math.min(y1,baselineRaw));const fontSize=Math.max(6,Math.min(72,(y1-y0)*sy*.78));
-        const runs=lineRuns(line,rtl).map(r=>({...r,fontSize}));const layoutXPt=x0*sx,layoutRightPt=x1*sx,baselinePt=ph-baselinePx*sy;
-        paragraphs.push({text,fontSize,bold:runs.some(r=>r.bold),italic:runs.some(r=>r.italic),rtl,heading:false,bullet:false,align:rtl?'right':'left',leftIndentPt:0,spaceAfterPt:0,lineCount:1,runs,layoutLines:[text],layoutRunLines:[runs],layoutText:text,layoutXPt,layoutRightPt,layoutWidthPt:Math.max(12,layoutRightPt-layoutXPt),layoutFirstBaselinePt:baselinePt,layoutLastBaselinePt:baselinePt,fontAscent:.8,ocrPositioned:true});
+        const runs=lineRuns(line,rtl).map(r=>({...r,fontSize}));const layoutXPt=x0*sx,layoutRightPt=x1*sx,baselinePt=ph-baselinePx*sy,ocrBoxHeightPt=(y1-y0)*sy,ocrBoxWidthPt=(x1-x0)*sx;
+        paragraphs.push({text,fontSize,bold:runs.some(r=>r.bold),italic:runs.some(r=>r.italic),rtl,heading:false,bullet:false,align:rtl?'right':'left',leftIndentPt:0,spaceAfterPt:0,lineCount:1,runs,layoutLines:[text],layoutRunLines:[runs],layoutText:text,layoutXPt,layoutRightPt,layoutWidthPt:Math.max(12,layoutRightPt-layoutXPt),layoutFirstBaselinePt:baselinePt,layoutLastBaselinePt:baselinePt,fontAscent:.8,ascent:.8,ocrPositioned:true,ocrBoxHeightPt,ocrBoxWidthPt});
         const words=Array.isArray(line?.words)?line.words:[];let added=0;
         for(const word of words){const n=normalizedBox(word?.bbox,rw,rh);if(n){maskBoxes.push(n);added++;}}
         if(!added){const n=normalizedBox(box,rw,rh);if(n)maskBoxes.push(n);}
