@@ -23,8 +23,20 @@ test('same-baseline columns are split into independent positioned lines',()=>{
   assert.equal(lines.length,4);
   assert.equal(lines[0].text,'Left column sentence');assert.equal(lines[1].text,'Right column sentence');
   assert.equal(lines[0].columnSplit,true);assert.equal(lines[1].columnSplit,true);
-  const p=linesToParagraphs(lines,612);
-  assert.equal(p.length,4);assert.equal(p[0].layoutXPt,72);assert.equal(p[1].layoutXPt,330);
+});
+
+test('two-column reading order joins each column without interleaving them',()=>{
+  const items=[];
+  for(let i=0;i<4;i++){
+    items.push({str:`Left ${i+1}`,transform:[11,0,0,11,72,700-i*16],width:55,fontName:'Arial'});
+    items.push({str:`Right ${i+1}`,transform:[11,0,0,11,330,700-i*16],width:60,fontName:'Arial'});
+  }
+  const p=linesToParagraphs(textItemsToLines(items,612),612);
+  assert.equal(p.length,2);
+  assert.equal(p[0].columnId,'left');assert.equal(p[1].columnId,'right');
+  assert.match(p[0].text,/Left 1 Left 2 Left 3 Left 4/);
+  assert.match(p[1].text,/Right 1 Right 2 Right 3 Right 4/);
+  assert.equal(p[0].layoutXPt,72);assert.equal(p[1].layoutXPt,330);
 });
 
 test('mixed inline styles remain distinct runs',()=>{
@@ -39,12 +51,25 @@ test('mixed inline styles remain distinct runs',()=>{
   assert.match(xml,/<w:b\/>[\s\S]*up 12%/);assert.match(xml,/<w:i\/>[\s\S]*today/);
 });
 
+test('font family, RTL direction, and font ascent survive into Word XML',()=>{
+  const styles={fRTL:{fontFamily:'"Noto Naskh Arabic", serif',ascent:.91,vertical:false}};
+  const lines=textItemsToLines([
+    {str:'مرحبا بالعالم',dir:'rtl',transform:[14,0,0,14,300,650],width:100,fontName:'fRTL'}
+  ],612,styles);
+  assert.equal(lines[0].rtl,true);assert.equal(lines[0].runs[0].fontFamily,'Noto Naskh Arabic');
+  const p=linesToParagraphs(lines,612);
+  assert.ok(p[0].ascent>=.9);
+  const xml=buildDocumentXml([{widthPt:612,heightPt:792,paragraphs:p}],{mode:'hybrid'});
+  assert.match(xml,/<w:bidi\/>/);assert.match(xml,/<w:rtl\/>/);
+  assert.match(xml,/w:rFonts w:ascii="Noto Naskh Arabic"/);
+});
+
 test('wrapped lines become paragraphs with layout hints',()=>{
   const p=linesToParagraphs([
-    {text:'Centered heading',y:120,xMin:210,xMax:402,fontSize:18,bold:true,italic:false,wideGaps:0,runs:[{text:'Centered heading',fontSize:18,bold:true,italic:false}]},
-    {text:'This is a wrapped',y:90,xMin:72,xMax:260,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'This is a wrapped',fontSize:10,bold:false,italic:false}]},
-    {text:'sentence.',y:78,xMin:72,xMax:140,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'sentence.',fontSize:10,bold:false,italic:false}]},
-    {text:'Indented block',y:50,xMin:110,xMax:220,fontSize:10,bold:false,italic:false,wideGaps:0,runs:[{text:'Indented block',fontSize:10,bold:false,italic:false}]}
+    {text:'Centered heading',y:120,xMin:210,xMax:402,fontSize:18,bold:true,italic:false,rtl:false,wideGaps:0,runs:[{text:'Centered heading',fontSize:18,bold:true,italic:false,rtl:false}],ascent:.82},
+    {text:'This is a wrapped',y:90,xMin:72,xMax:260,fontSize:10,bold:false,italic:false,rtl:false,wideGaps:0,runs:[{text:'This is a wrapped',fontSize:10,bold:false,italic:false,rtl:false}],ascent:.82},
+    {text:'sentence.',y:78,xMin:72,xMax:140,fontSize:10,bold:false,italic:false,rtl:false,wideGaps:0,runs:[{text:'sentence.',fontSize:10,bold:false,italic:false,rtl:false}],ascent:.82},
+    {text:'Indented block',y:50,xMin:110,xMax:220,fontSize:10,bold:false,italic:false,rtl:false,wideGaps:0,runs:[{text:'Indented block',fontSize:10,bold:false,italic:false,rtl:false}],ascent:.82}
   ],612);
   assert.equal(p[0].align,'center');
   assert.equal(p[1].text,'This is a wrapped sentence.');
@@ -58,7 +83,7 @@ test('wrapped lines become paragraphs with layout hints',()=>{
 
 test('scan and complex layout diagnostics',()=>{
   assert.equal(analyzeTextPage([],600).scannedLikely,true);
-  const lines=Array.from({length:10},(_,i)=>({text:'abc',xMin:i%2?280:20,wideGaps:i<4?1:0}));
+  const lines=Array.from({length:10},(_,i)=>({text:'abc',xMin:i%2?280:20,wideGaps:i<4?1:0,vertical:false,rtl:false}));
   assert.equal(analyzeTextPage(lines,600).complexLayout,true);
 });
 
@@ -83,9 +108,9 @@ test('layout docx references page images and png content type',()=>{
 
 test('hybrid docx keeps editable text, page coordinates, and a behind-text visual layer',()=>{
   const pages=[{pageNumber:1,widthPt:612,heightPt:792,paragraphs:[{
-    text:'Editable report text',layoutText:'Editable report\ntext',fontSize:11,bold:false,italic:false,lineCount:2,
-    layoutXPt:72,layoutWidthPt:180,layoutFirstBaselinePt:680,layoutLastBaselinePt:666,
-    layoutRunLines:[[{text:'Editable report',fontSize:11,bold:false,italic:false}],[{text:'text',fontSize:11,bold:false,italic:false}]]
+    text:'Editable report text',layoutText:'Editable report\ntext',fontSize:11,bold:false,italic:false,rtl:false,lineCount:2,
+    layoutXPt:72,layoutWidthPt:180,layoutFirstBaselinePt:680,layoutLastBaselinePt:666,ascent:.82,
+    layoutRunLines:[[{text:'Editable report',fontSize:11,bold:false,italic:false,rtl:false}],[{text:'text',fontSize:11,bold:false,italic:false,rtl:false}]]
   }],imagePixelWidth:1020,imagePixelHeight:1320,imageName:'visual-001.png',imageRelId:'rIdImage1'}];
   const xml=buildDocumentXml(pages,{mode:'hybrid'});const parts=buildDocxParts(pages,'Hybrid Test',{mode:'hybrid'});
   assert.match(xml,/Editable report/);
