@@ -105,7 +105,7 @@ test('homepage declares site identity and a Google-compatible favicon',()=>{
 });
 
 test('tool schema generator stays enabled',()=>{
-  const js=fs.readFileSync('assets/js/site.mjs','utf8');
+  const js=fs.readFileSync('assets/js/site.mjs','utf8')+'\n'+fs.readFileSync('assets/js/site-base.mjs','utf8');
   assert.match(js,/WebPage/);
   assert.match(js,/BreadcrumbList/);
   assert.match(js,/quicklio-tool-schema/);
