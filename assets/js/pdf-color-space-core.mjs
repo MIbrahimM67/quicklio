@@ -145,11 +145,9 @@ function findPdfStreams(bytes){
 
 async function inflateBytes(bytes){
   if(typeof DecompressionStream!=='function')throw new Error('Deflate decompression is unavailable.');
-  const ds=new DecompressionStream('deflate');
-  const writer=ds.writable.getWriter();
-  await writer.write(bytes);
-  await writer.close();
-  return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+  const input=new Blob([bytes]).stream();
+  const output=input.pipeThrough(new DecompressionStream('deflate'));
+  return new Uint8Array(await new Response(output).arrayBuffer());
 }
 
 export async function scanPdfContentPaintOperators(input){
