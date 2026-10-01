@@ -11,7 +11,9 @@ function walk(dir){
   });
 }
 const htmlFiles=walk('.').filter(p=>p.endsWith('index.html'));
-const siteJs=fs.readFileSync('assets/js/site.mjs','utf8');
+const siteLoader=fs.readFileSync('assets/js/site.mjs','utf8');
+const siteRuntime=fs.readFileSync('assets/js/site-base.mjs','utf8');
+const siteJs=siteLoader+'\n'+siteRuntime;
 const privacy=fs.readFileSync('privacy/index.html','utf8');
 
 test('GA4 uses the Quicklio measurement ID',()=>{
