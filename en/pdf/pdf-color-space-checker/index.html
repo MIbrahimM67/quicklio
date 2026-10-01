@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDF Color Space Checker – Check RGB, CMYK & Spot Colors | Quicklio</title>
+  <meta name="description" content="Check a PDF for RGB, CMYK, grayscale, ICC-based and spot-color signals page by page. Private browser-only analysis with no file upload.">
+  <link rel="canonical" href="https://quicklio.app/en/pdf/pdf-color-space-checker/">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/brand/quicklio-favicon.png">
+  <link rel="apple-touch-icon" href="/assets/brand/quicklio-favicon.png">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Quicklio">
+  <meta property="og:title" content="PDF Color Space Checker – RGB, CMYK & Spot Colors">
+  <meta property="og:description" content="Inspect PDF color-space signals locally in your browser.">
+  <meta property="og:url" content="https://quicklio.app/en/pdf/pdf-color-space-checker/">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://quicklio.app/en/pdf/pdf-color-space-checker/#webpage","url":"https://quicklio.app/en/pdf/pdf-color-space-checker/","name":"PDF Color Space Checker","description":"Check a PDF for RGB, CMYK, grayscale, ICC-based and spot-color signals page by page in the browser.","isPartOf":{"@type":"WebSite","@id":"https://quicklio.app/#website"},"publisher":{"@type":"Organization","@id":"https://quicklio.app/#organization","name":"Quicklio","url":"https://quicklio.app/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Quicklio","item":"https://quicklio.app/"},{"@type":"ListItem","position":2,"name":"PDF & Print Tools","item":"https://quicklio.app/en/pdf/"},{"@type":"ListItem","position":3,"name":"PDF Color Space Checker","item":"https://quicklio.app/en/pdf/pdf-color-space-checker/"}]}</script>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .color-shell{width:min(1120px,calc(100% - 2rem));margin:0 auto}
+    .color-hero{max-width:840px;padding:3.2rem 0 1.5rem}
+    .color-hero .eyebrow{font-size:.8rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#596b53}
+    .color-hero h1{font-size:clamp(2.35rem,7vw,4.8rem);line-height:.96;margin:.45rem 0 .85rem}
+    .color-hero p{max-width:760px;font-size:1.08rem;line-height:1.65;color:#4f4e47}
+    .checker-card,.copy-card{background:#fff;border:1px solid var(--color-rule,#ddd6c9);border-radius:1.05rem;box-shadow:0 12px 34px rgba(38,34,25,.05)}
+    .checker-card{padding:1rem}
+    .color-drop{min-height:10rem;border:1.5px dashed #a79d8b;border-radius:.9rem;background:#fbf8f0;display:grid;place-items:center;text-align:center;padding:1.3rem;cursor:pointer}
+    .color-drop.is-drag{border-style:solid;background:#f4f1e8}
+    .color-drop strong{display:block;font-size:1.08rem;margin-bottom:.28rem}
+    .color-drop span{color:#65625a;font-size:.9rem}
+    .color-meta{font-size:.88rem;color:#625f57;margin:.75rem 0 0;overflow-wrap:anywhere}
+    #status{margin-top:.8rem}.notice.is-error{background:#fff0ec;color:#8b2f21}
+    .results{display:grid;gap:1rem;margin-top:1rem}
+    .result-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.8rem;align-items:center}
+    .result-head h2{margin:0;font-size:1.15rem}
+    .verdict-badge{display:inline-flex;align-items:center;border-radius:999px;padding:.45rem .72rem;font-size:.8rem;font-weight:850;background:#eeece5;color:#4e4d46}
+    .verdict-badge[data-tone="good"]{background:#e6f3e4;color:#315c31}
+    .verdict-badge[data-tone="warning"]{background:#fff0d9;color:#754b12}
+    .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+    .summary-grid article{border:1px solid #e0dace;border-radius:.8rem;padding:.8rem;background:#fcfaf5;min-width:0}
+    .summary-grid span{display:block;color:#68645d;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+    .summary-grid strong{display:block;margin-top:.2rem;font-size:.98rem;overflow-wrap:anywhere}
+    .table-wrap{overflow:auto;border:1px solid #e0dace;border-radius:.8rem}
+    .signal-table{width:100%;border-collapse:collapse;min-width:610px;font-size:.84rem}
+    .signal-table th,.signal-table td{padding:.65rem .7rem;border-bottom:1px solid #ebe6dc;text-align:left}
+    .signal-table thead th{background:#f7f4ed;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:#5f5c54}
+    .signal-table tbody tr:last-child th,.signal-table tbody tr:last-child td{border-bottom:0}
+    .detail-grid{display:grid;grid-template-columns:1fr;gap:.8rem}
+    .detail-box{border:1px solid #e0dace;border-radius:.8rem;padding:.9rem}
+    .detail-box h3{font-size:.92rem;margin:0 0 .55rem}
+    .detail-box ul{margin:0;padding-left:1.1rem;color:#59564f;font-size:.84rem;line-height:1.6}
+    .limitation{padding:.8rem .9rem;border-left:3px solid #b26c2c;background:#fff7e9;border-radius:.25rem .7rem .7rem .25rem;color:#634719;font-size:.86rem;line-height:1.55}
+    .copy-grid{display:grid;grid-template-columns:1fr;gap:1rem;padding:1.4rem 0 4rem}
+    .copy-card{padding:1.15rem}
+    .copy-card h2{font-size:1.25rem;margin:.05rem 0 .65rem}
+    .copy-card h3{font-size:1rem;margin:1rem 0 .35rem}
+    .copy-card p,.copy-card li{color:#504f48;line-height:1.68}
+    .copy-card ul{padding-left:1.2rem}
+    .related-links{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.8rem}
+    .related-links a{display:inline-flex;border:1px solid #d6cebf;border-radius:999px;padding:.45rem .68rem;text-decoration:none;font-weight:750;font-size:.82rem}
+    @media(min-width:720px){.summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.detail-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.copy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  </style>
+</head>
+<body class="tool-page theme-pdf">
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="/"><img src="/assets/brand/quicklio-mark.svg" alt="" width="38" height="38"><span class="brand-word">Quicklio</span></a>
+    <nav class="primary-nav" aria-label="Primary"><a href="/en/pdf/">PDF tools</a><a href="/en/images/">Image tools</a><a href="/about/">About</a></nav>
+  </div>
+</header>
+<main class="color-shell">
+  <section class="color-hero">
+    <div class="eyebrow">PDF & print · prepress</div>
+    <h1>PDF Color Space Checker</h1>
+    <p>Check whether a PDF contains <strong>RGB, CMYK, grayscale, ICC-based, or spot-color signals</strong>. Quicklio analyzes page drawing operations and readable PDF color-space declarations locally in your browser—your file is not uploaded.</p>
+  </section>
+
+  <section class="checker-card" aria-label="PDF color space checker">
+    <input id="pdfInput" type="file" accept="application/pdf,.pdf" hidden>
+    <div id="drop" class="color-drop" role="button" tabindex="0" aria-label="Choose PDF to analyze"><div><strong>Drop a PDF here or click to choose</strong><span>Analysis runs on this device. No account required.</span></div></div>
+    <p id="fileMeta" class="color-meta">Choose a PDF to inspect its color-space signals.</p>
+    <div id="status" class="notice" aria-live="polite">Ready.</div>
+
+    <div id="results" class="results" hidden>
+      <div class="result-head"><h2>Color-space report</h2><span id="verdict" class="verdict-badge" data-tone="neutral">Undetermined</span></div>
+      <div id="summaryGrid" class="summary-grid"></div>
+      <div class="table-wrap">
+        <table class="signal-table">
+          <thead><tr><th>Page</th><th>Direct paint signals</th><th>RGB ops</th><th>CMYK ops</th><th>Gray ops</th></tr></thead>
+          <tbody id="pageRows"></tbody>
+        </table>
+      </div>
+      <div class="detail-grid">
+        <section class="detail-box"><h3>Declared color spaces</h3><ul id="declaredSpaces"></ul></section>
+        <section class="detail-box"><h3>Named spot inks</h3><ul id="spotNames"></ul></section>
+        <section class="detail-box"><h3>Print metadata</h3><ul id="printSignals"></ul></section>
+      </div>
+      <p class="limitation"><strong>This is a diagnostic checker, not a color conversion or press-ready certification.</strong> PDFs can mix color spaces object by object, and some profiles or image color information may be encoded in ways a lightweight browser scan cannot identify exhaustively. Follow the requirements of the printer or publishing service that will actually output the file.</p>
+    </div>
+  </section>
+
+  <section class="copy-grid">
+    <article class="copy-card">
+      <h2>Is my PDF RGB or CMYK?</h2>
+      <p>A PDF does not have to use one global color mode. Text, vector artwork, images, gradients, and spot inks can use different color spaces in the same file. That is why this checker reports the signals it finds instead of forcing the entire PDF into a single label.</p>
+      <p>If both RGB and CMYK are detected, the result says <strong>Mixed RGB + CMYK signals</strong>. That is useful evidence, but it is not automatically an error: the correct requirement depends on the print workflow.</p>
+    </article>
+
+    <article class="copy-card">
+      <h2>What Quicklio checks</h2>
+      <ul>
+        <li>Page drawing operations that directly paint in RGB, CMYK, or grayscale.</li>
+        <li>Readable PDF declarations such as DeviceRGB, DeviceCMYK, DeviceGray, ICCBased, Lab, Indexed, Separation, and DeviceN.</li>
+        <li>Named Separation and DeviceN inks when their names are exposed in the PDF structure.</li>
+        <li>Basic PDF/X and output-intent signals where they can be identified.</li>
+      </ul>
+    </article>
+
+    <article class="copy-card">
+      <h2>What this tool does not do</h2>
+      <p>It does not convert RGB artwork to CMYK, assign ICC profiles, simulate a press, calculate ink coverage, or guarantee that a file satisfies a printer's complete preflight specification. A correct CMYK conversion needs a target output condition, not a generic one-click replacement.</p>
+      <p>For geometry problems, use the <a href="/en/pdf/pdf-page-box-editor/">PDF Page Box Editor</a> to inspect TrimBox, BleedBox, CropBox, MediaBox, and ArtBox.</p>
+    </article>
+
+    <article class="copy-card">
+      <h2>Related PDF & print checks</h2>
+      <p>Color space is only one part of print preparation. Page boxes, bleed, crop marks, and effective image resolution can matter independently.</p>
+      <div class="related-links">
+        <a href="/en/pdf/pdf-page-box-editor/">Check PDF page boxes</a>
+        <a href="/en/pdf/add-bleed-and-crop-marks/">Add bleed & crop marks</a>
+        <a href="/en/images/dpi-print-size-calculator/">DPI & print size</a>
+        <a href="/en/pdf/">All PDF tools</a>
+      </div>
+    </article>
+
+    <article class="copy-card">
+      <h2>PDF color checker FAQ</h2>
+      <h3>Can one PDF contain both RGB and CMYK?</h3>
+      <p>Yes. Different objects inside a PDF can use different color spaces, so mixed files are possible.</p>
+      <h3>Does finding RGB mean the PDF will print badly?</h3>
+      <p>No. It means RGB signals were found. Whether they are acceptable depends on the printer, RIP, output profile, and production requirements.</p>
+      <h3>Does this convert a PDF to CMYK?</h3>
+      <p>No. It is intentionally a checker. It does not rewrite colors or silently change profiles.</p>
+    </article>
+
+    <article class="copy-card">
+      <h2>Private browser-only analysis</h2>
+      <p>Your PDF is read by JavaScript running in your browser. Quicklio does not need to upload the document to a conversion server for this check. Large or unusually complex PDFs can still take longer because every page's drawing operations need to be inspected on your device.</p>
+      <h3>What are spot colors?</h3>
+      <p>PDF spot colors are commonly represented by named Separation or DeviceN color spaces. This checker surfaces those names when they are exposed in readable PDF structure.</p>
+    </article>
+  </section>
+</main>
+<footer class="site-footer"><div class="shell footer-inner"><div><strong>Quicklio</strong><p>Simple browser tools for practical file and print jobs.</p></div><div class="footer-links"><a href="/en/pdf/">PDF tools</a><a href="/privacy/">Privacy</a><a href="/about/">About</a></div></div></footer>
+<script type="module" src="/assets/js/pdf-color-space-app.mjs"></script>
+<script type="module" src="/assets/js/site.mjs"></script>
+</body>
+</html>
