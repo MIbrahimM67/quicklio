@@ -1,10 +1,16 @@
 import{test,expect}from'@playwright/test';
+import fs from'node:fs';
+
+const sitemap=fs.readFileSync('sitemap.xml','utf8');
+const toolCount=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/[^<]+)<\/loc>/g)]
+  .map(match=>match[1])
+  .filter(path=>/^\/en\/[^/]+\/[^/]+\/$/.test(path)).length;
 
 test('homepage groups every tool into task-oriented subcategories',async({page})=>{
   await page.goto('/');
   const groups=page.locator('[data-tool-group]');
   await expect(groups).toHaveCount(7);
-  await expect(page.locator('[data-tool-card]')).toHaveCount(34);
+  await expect(page.locator('[data-tool-card]')).toHaveCount(toolCount);
   await expect(page.locator('[data-tool-group="pdf-essentials"] .tool-subcategory-title strong')).toHaveText('PDF Essentials');
   await expect(page.locator('[data-tool-group="print-prepress"] .tool-subcategory-title strong')).toHaveText('Print & Prepress');
   await expect(page.locator('[data-tool-group="images-photos"] .tool-subcategory-title strong')).toHaveText('Images & Photos');
