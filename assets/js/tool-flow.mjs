@@ -92,6 +92,7 @@ if(body?.classList.contains('tool-page')){
 
     const hasUpload=fileInputs.length>0;
     const hasSettings=controlTips.length>0;
+    const separateSettings=hasUpload&&hasSettings;
     const actionLabel=textOf(primaryAction)||(/calculator/i.test(h1)?'Calculate':'Create result');
     const settingLabels=controlTips.slice(0,4).map(t=>t.label);
     const settingsDescription=settingLabels.length
@@ -99,10 +100,10 @@ if(body?.classList.contains('tool-page')){
       :'Fine-tune the options for the result you want. Open the control guide below if an option is unclear.';
     const startDescription=hasUpload
       ?(uploadTrigger?'Choose “'+textOf(uploadTrigger)+'” and select the '+noun+' you want to work with.':'Choose the '+noun+' you want to work with. Nothing is changed until you run the tool.')
-      :'Fill in the main values this tool needs. You can revise them at any time.';
+      :(hasSettings?'Enter or choose the values this tool needs. The control guide below explains the available inputs.':'Enter the main details this tool needs. You can revise them at any time.');
     const steps=[];
     steps.push({key:'start',title:hasUpload?'Add your '+noun:'Enter your details',description:startDescription});
-    if(hasSettings)steps.push({key:'settings',title:'Choose your settings',description:settingsDescription});
+    if(separateSettings)steps.push({key:'settings',title:'Choose your settings',description:settingsDescription});
     if(primaryAction)steps.push({key:'run',title:'Run the tool',description:'When the setup looks right, choose “'+actionLabel+'”. Quicklio will keep you on this page while it processes the result.'});
     steps.push({key:'result',title:'Review your result',description:downloadTargets.length?'Check the final result. If you want changes, adjust the settings and run it again; otherwise download or save it.':'Check the result. If it needs changes, adjust the inputs or actions above and try again.'});
 
@@ -120,8 +121,8 @@ if(body?.classList.contains('tool-page')){
     }
 
     let interacted=false;
+    let settingsTouched=false;
     let actionClicked=false;
-    let busyTimer=0;
     const status=guide.querySelector('[data-tool-flow-status]');
     const progress=guide.querySelector('[data-tool-flow-progress]');
     const resultNote=guide.querySelector('[data-tool-flow-result-note]');
@@ -150,17 +151,13 @@ if(body?.classList.contains('tool-page')){
     }
     function currentIndex(){
       if(resultReady())return steps.length-1;
-      let i=0;
-      if(hasUpload){
-        if(!hasFile())return 0;
-        i=1;
-      }else if(interacted)i=1;
-      if(hasSettings&&steps[i]?.key==='settings'){
-        if(!interacted&&hasUpload)return i;
-        i++;
-      }
-      if(primaryAction&&steps[i]?.key==='run')return i;
-      return Math.min(i,steps.length-1);
+      if(hasUpload&&!hasFile())return 0;
+      if(!hasUpload&&!interacted)return 0;
+      const settingsIndex=steps.findIndex(step=>step.key==='settings');
+      if(settingsIndex>=0&&!settingsTouched)return settingsIndex;
+      const runIndex=steps.findIndex(step=>step.key==='run');
+      if(runIndex>=0)return runIndex;
+      return steps.length-1;
     }
     function update(){
       const ready=resultReady();
@@ -171,31 +168,52 @@ if(body?.classList.contains('tool-page')){
         const state=el.querySelector('.tool-flow-state');
         if(state)state.textContent=(ready||index<current)?'✓':index===current?'Now':'';
       });
-      progress.textContent=ready?'Complete':'Step '+(current+1)+' of '+steps.length;
       resultNote.hidden=!ready;
-      if(ready)status.textContent='Result ready — review it, refine the settings if needed, or download/save it.';
-      else if(steps[current])status.textContent='Next: '+steps[current].title+'. '+steps[current].description;
+      const autoProcessing=hasUpload&&hasFile()&&!ready&&!primaryAction&&!separateSettings;
+      const actionProcessing=actionClicked&&!ready;
+      if(autoProcessing||actionProcessing){
+        progress.textContent='Processing';
+        status.textContent='Working on it… keep this page open while Quicklio prepares the result.';
+      }else if(ready){
+        progress.textContent='Complete';
+        status.textContent='Result ready — review it, refine the settings if needed, or download/save it.';
+      }else{
+        progress.textContent='Step '+(current+1)+' of '+steps.length;
+        if(steps[current])status.textContent='Next: '+steps[current].title+'. '+steps[current].description;
+      }
     }
 
-    const markInteracted=event=>{
+    const markInput=event=>{
       if(guide.contains(event.target))return;
       interacted=true;
+      if(!fileInputs.includes(event.target))settingsTouched=true;
       update();
     };
-    scope.addEventListener('input',markInteracted,true);
-    scope.addEventListener('change',markInteracted,true);
+    scope.addEventListener('input',markInput,true);
+    scope.addEventListener('change',markInput,true);
     scope.addEventListener('drop',event=>{
       if(guide.contains(event.target))return;
       interacted=true;
       setTimeout(update,0);
     },true);
-    if(primaryAction)primaryAction.addEventListener('click',()=>{
-      if(primaryAction.matches('[disabled],[aria-disabled="true"]'))return;
-      interacted=true;
-      actionClicked=true;
-      status.textContent='Working on it… keep this page open while Quicklio prepares the result.';
-      clearTimeout(busyTimer);
-      busyTimer=setTimeout(update,900);
+    scope.addEventListener('click',event=>{
+      if(guide.contains(event.target))return;
+      const target=event.target instanceof Element?event.target.closest('button,[role="button"],input,select,textarea,label,canvas'):null;
+      if(!target)return;
+      if(target===primaryAction){
+        if(primaryAction.matches('[disabled],[aria-disabled="true"]'))return;
+        interacted=true;
+        settingsTouched=true;
+        actionClicked=true;
+        update();
+        return;
+      }
+      if(target===uploadTrigger||isDownload(target)||isSecondary(target))return;
+      if(separateSettings){
+        interacted=true;
+        settingsTouched=true;
+        update();
+      }
     },true);
     const observer=new MutationObserver(mutations=>{
       if(mutations.every(mutation=>guide.contains(mutation.target)))return;
