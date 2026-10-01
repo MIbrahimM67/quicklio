@@ -1,26 +1,28 @@
 const body=document.body;
 
 if(body?.classList.contains('tool-page')){
-  const workbench=document.querySelector('.tool-workbench')||document.querySelector('main');
-  if(workbench&&!document.querySelector('[data-tool-flow-guide]')){
+  const explicitWorkbench=document.querySelector('.tool-workbench');
+  const main=document.querySelector('main');
+  const scope=explicitWorkbench||main;
+  if(scope&&!document.querySelector('[data-tool-flow-guide]')){
     const path=location.pathname;
     const h1=document.querySelector('h1')?.textContent?.trim()||'this tool';
     const category=(path.split('/').filter(Boolean)[1]||'tool').toLowerCase();
     const noun=category==='images'?'image':category==='pdf'||category==='print'?'PDF':category==='social'?'image':category==='labels'?'label setup':'details';
-    const fileInputs=[...workbench.querySelectorAll('input[type="file"]')];
-    const controls=[...workbench.querySelectorAll('input:not([type="file"]):not([type="hidden"]),select,textarea')]
-      .filter(el=>!el.disabled&&el.getAttribute('aria-hidden')!=='true'&&el.getClientRects().length);
-    const clickable=[...workbench.querySelectorAll('button,a.button,[role="button"]')]
-      .filter(el=>el.getAttribute('aria-hidden')!=='true'&&el.getClientRects().length);
+    const fileInputs=[...scope.querySelectorAll('input[type="file"]')];
+    const controls=[...scope.querySelectorAll('input:not([type="file"]):not([type="hidden"]),select,textarea')]
+      .filter(el=>el.getAttribute('aria-hidden')!=='true'&&!el.closest('[hidden],[aria-hidden="true"]')&&el.getClientRects().length);
+    const clickable=[...scope.querySelectorAll('button,a.button,[role="button"]')]
+      .filter(el=>el.getAttribute('aria-hidden')!=='true'&&!el.closest('[hidden],[aria-hidden="true"]')&&el.getClientRects().length);
     const textOf=el=>(el?.textContent||el?.getAttribute?.('aria-label')||'').replace(/\s+/g,' ').trim();
     const isDownload=el=>/download|save|export|print/i.test(textOf(el))||el.hasAttribute?.('download');
-    const isSecondary=el=>/reset|clear|remove file|choose another|back|undo|redo|cancel/i.test(textOf(el));
+    const isSecondary=el=>/reset|clear|remove file|choose another|back|undo|redo|cancel|delete selected/i.test(textOf(el));
     const downloadTargets=clickable.filter(isDownload);
     const actionTargets=clickable.filter(el=>!isDownload(el)&&!isSecondary(el)&&!/browse|upload|choose file|select file/i.test(textOf(el)));
     const primaryAction=actionTargets.find(el=>el.matches('.primary,[data-primary-action]'))||actionTargets[0]||null;
 
     function cleanLabel(value){
-      return (value||'').replace(/[:*]+$/,'').replace(/\s+/g,' ').trim();
+      return(value||'').replace(/[:*]+$/,'').replace(/\s+/g,' ').trim();
     }
     function labelFor(el){
       if(el.id){
@@ -32,7 +34,7 @@ if(body?.classList.contains('tool-page')){
       return cleanLabel(el.getAttribute('aria-label')||el.name||el.id||'Option');
     }
     function nearbyHelp(el){
-      const parent=el.closest('.field,.form-field,.control,.color-control,.input-group,.setting,.settings-row,.row')||el.parentElement;
+      const parent=el.closest('.field,.form-field,.control,.color-control,.logo-control,.input-group,.setting,.settings-row,.row')||el.parentElement;
       if(!parent)return'';
       const help=[...parent.querySelectorAll('small,.hint,.help,.muted,.field-help')]
         .map(node=>(node.textContent||'').replace(/\s+/g,' ').trim())
@@ -63,9 +65,13 @@ if(body?.classList.contains('tool-page')){
     const hasUpload=fileInputs.length>0;
     const hasControls=controls.length>0;
     const actionLabel=textOf(primaryAction)||(/calculator/i.test(h1)?'Calculate':'Create result');
+    const settingLabels=controlTips.slice(0,3).map(t=>t.label);
+    const settingsDescription=settingLabels.length
+      ?'Adjust '+settingLabels.join(', ')+(controlTips.length>3?', and the other available options.':' when needed.')+' Open the control guide below for a quick explanation of each setting.'
+      :'Fine-tune the options for the result you want. Open the control guide below if an option is unclear.';
     const steps=[];
     steps.push({key:'start',title:hasUpload?'Add your '+noun:'Enter your details',description:hasUpload?'Choose the '+noun+' you want to work with. Nothing is changed until you run the tool.':'Fill in the main values this tool needs. You can revise them at any time.'});
-    if(hasControls)steps.push({key:'settings',title:'Choose your settings',description:'Fine-tune the options for the result you want. Use the control tips below if an option is unclear.'});
+    if(hasControls)steps.push({key:'settings',title:'Choose your settings',description:settingsDescription});
     if(primaryAction)steps.push({key:'run',title:'Run the tool',description:'When the setup looks right, choose “'+actionLabel+'”. Quicklio will keep you on this page while it processes the result.'});
     steps.push({key:'result',title:'Review your result',description:downloadTargets.length?'Check the final result. If you want changes, adjust the settings and run it again; otherwise download or save it.':'Check the result. If it needs changes, adjust the inputs above and try again.'});
 
@@ -74,7 +80,13 @@ if(body?.classList.contains('tool-page')){
     guide.dataset.toolFlowGuide='';
     guide.setAttribute('aria-label','How to use '+h1);
     guide.innerHTML='<div class="tool-flow-head"><div><span class="eyebrow">Simple guided flow</span><h2>Use '+h1+' in '+steps.length+' steps</h2><p data-tool-flow-status>Start with step 1. Quicklio will show what to do next.</p></div><span class="tool-flow-progress" data-tool-flow-progress>Step 1 of '+steps.length+'</span></div><ol class="tool-flow-steps">'+steps.map((step,index)=>'<li data-flow-step="'+step.key+'"><span class="tool-flow-number">'+(index+1)+'</span><div><strong>'+step.title+'</strong><p>'+step.description+'</p></div><span class="tool-flow-state" aria-hidden="true"></span></li>').join('')+'</ol>'+(controlTips.length?'<details class="tool-flow-tips"><summary>What do the controls do?</summary><dl>'+controlTips.map(t=>'<div><dt>'+t.label+'</dt><dd>'+t.help+'</dd></div>').join('')+'</dl></details>':'')+'<div class="tool-flow-result-note" data-tool-flow-result-note hidden><strong>Your result is ready.</strong><span> Review it below. Change any setting and run the tool again if you want to refine it, or download/save it when you are happy.</span></div>';
-    workbench.before(guide);
+
+    if(explicitWorkbench)explicitWorkbench.before(guide);
+    else{
+      const hero=main?.querySelector('.tool-hero,.hero,[data-tool-hero]');
+      if(hero)hero.after(guide);
+      else main?.prepend(guide);
+    }
 
     let interacted=false;
     let actionClicked=false;
@@ -85,14 +97,15 @@ if(body?.classList.contains('tool-page')){
     const stepEls=[...guide.querySelectorAll('[data-flow-step]')];
 
     function isVisible(el){
-      if(!el||el.hidden||el.getAttribute('aria-hidden')==='true')return false;
+      if(!el||el.hidden||el.getAttribute('aria-hidden')==='true'||el.closest('[hidden],[aria-hidden="true"]'))return false;
       const style=getComputedStyle(el);
       return style.display!=='none'&&style.visibility!=='hidden'&&el.getClientRects().length>0;
     }
     function hasFile(){return fileInputs.some(input=>input.files&&input.files.length>0)}
     function enabledDownload(){return downloadTargets.find(el=>isVisible(el)&&!el.matches('[disabled],[aria-disabled="true"]'))}
     function meaningfulResult(){
-      const candidates=[...workbench.querySelectorAll('[data-result],[id*="result" i],[class*="result" i],[id*="output" i],[class*="output" i]')];
+      const candidates=[...scope.querySelectorAll('[data-result],[id*="result" i],[class*="result" i],[id*="output" i],[class*="output" i]')]
+        .filter(el=>!el.closest('[data-tool-flow-guide]'));
       return candidates.find(el=>{
         if(!isVisible(el)||el.matches('.error,[role="alert"].error'))return false;
         const text=(el.textContent||'').replace(/\s+/g,' ').trim();
@@ -133,9 +146,9 @@ if(body?.classList.contains('tool-page')){
       else if(steps[current])status.textContent='Next: '+steps[current].title+'. '+steps[current].description;
     }
 
-    workbench.addEventListener('input',()=>{interacted=true;update()},true);
-    workbench.addEventListener('change',()=>{interacted=true;update()},true);
-    workbench.addEventListener('drop',()=>{interacted=true;setTimeout(update,0)},true);
+    scope.addEventListener('input',()=>{interacted=true;update()},true);
+    scope.addEventListener('change',()=>{interacted=true;update()},true);
+    scope.addEventListener('drop',()=>{interacted=true;setTimeout(update,0)},true);
     if(primaryAction)primaryAction.addEventListener('click',()=>{
       if(primaryAction.matches('[disabled],[aria-disabled="true"]'))return;
       interacted=true;
@@ -145,7 +158,7 @@ if(body?.classList.contains('tool-page')){
       busyTimer=setTimeout(update,900);
     },true);
     const observer=new MutationObserver(()=>update());
-    observer.observe(workbench,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','disabled','aria-disabled','aria-hidden','class','src']});
+    observer.observe(scope,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','disabled','aria-disabled','aria-hidden','class','src']});
     update();
   }
 }
