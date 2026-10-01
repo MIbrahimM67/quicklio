@@ -1,5 +1,5 @@
 import{pdfjsLib}from'/assets/js/pdfjs-browser.mjs';
-import{scanPdfColorSpaces,summarizePageOperatorNames,buildColorReport}from'/assets/js/pdf-color-space-core.mjs';
+import{scanPdfColorSpaces,scanPdfContentPaintOperators,summarizePageOperatorNames,buildColorReport}from'/assets/js/pdf-color-space-core.mjs';
 
 const $=s=>document.querySelector(s);
 const input=$('#pdfInput');
@@ -91,6 +91,7 @@ async function analyze(file){
   try{
     const bytes=new Uint8Array(await file.arrayBuffer());
     const raw=scanPdfColorSpaces(bytes);
+    raw.originalPaint=await scanPdfContentPaintOperators(bytes);
     const pdf=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
     fileMeta.textContent=`${file.name} · ${pdf.numPages} page${pdf.numPages===1?'':'s'} · ${bytesLabel(file.size)}`;
     const pages=[];
