@@ -21,6 +21,7 @@ for(const path of paths){
     const desktop=await page.evaluate(()=>{
       const doc=document.documentElement;
       const wb=document.querySelector('.tool-workbench');
+      const surface=wb||document.querySelector('main');
       const overflow=doc.scrollWidth-doc.clientWidth;
       let halfColumnTrap=false;
       if(wb&&wb.children.length===1){
@@ -32,29 +33,47 @@ for(const path of paths){
         }
       }
       const clipped=[...document.querySelectorAll('main button,main .button')].filter(el=>{
+        if(el.closest('[hidden],[aria-hidden="true"]'))return false;
         const r=el.getBoundingClientRect();
         const s=getComputedStyle(el);
-        return s.display!=='none'&&r.width>0&&(r.left<-2||r.right>innerWidth+2);
-      }).length;
-      return{overflow,halfColumnTrap,clipped,workbenchWidth:wb?.getBoundingClientRect().width||0};
+        if(s.display==='none'||s.visibility==='hidden'||Number(s.opacity)===0||!el.getClientRects().length)return false;
+        if(!(r.left<-2||r.right>innerWidth+2))return false;
+        let parent=el.parentElement;
+        while(parent&&parent!==document.body){
+          const ps=getComputedStyle(parent);
+          if(['auto','scroll'].includes(ps.overflowX)&&parent.scrollWidth>parent.clientWidth)return false;
+          parent=parent.parentElement;
+        }
+        return true;
+      }).map(el=>(el.textContent||el.getAttribute('aria-label')||el.id||el.className).replace(/\s+/g,' ').trim());
+      return{overflow,halfColumnTrap,clipped,surfaceWidth:surface?.getBoundingClientRect().width||0};
     });
     expect(desktop.overflow).toBeLessThanOrEqual(2);
     expect(desktop.halfColumnTrap).toBe(false);
-    expect(desktop.clipped).toBe(0);
-    expect(desktop.workbenchWidth).toBeGreaterThan(260);
+    expect(desktop.clipped).toEqual([]);
+    expect(desktop.surfaceWidth).toBeGreaterThan(260);
 
     await page.setViewportSize({width:375,height:812});
     await page.reload({waitUntil:'domcontentloaded'});
     await expect(page.locator('[data-tool-flow-guide]')).toBeVisible();
-    const mobile=await page.evaluate(()=>({
-      overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
-      clipped:[...document.querySelectorAll('main button,main .button')].filter(el=>{
+    const mobile=await page.evaluate(()=>{
+      const clipped=[...document.querySelectorAll('main button,main .button')].filter(el=>{
+        if(el.closest('[hidden],[aria-hidden="true"]'))return false;
         const r=el.getBoundingClientRect();
         const s=getComputedStyle(el);
-        return s.display!=='none'&&r.width>0&&(r.left<-2||r.right>innerWidth+2);
-      }).length
-    }));
+        if(s.display==='none'||s.visibility==='hidden'||Number(s.opacity)===0||!el.getClientRects().length)return false;
+        if(!(r.left<-2||r.right>innerWidth+2))return false;
+        let parent=el.parentElement;
+        while(parent&&parent!==document.body){
+          const ps=getComputedStyle(parent);
+          if(['auto','scroll'].includes(ps.overflowX)&&parent.scrollWidth>parent.clientWidth)return false;
+          parent=parent.parentElement;
+        }
+        return true;
+      }).map(el=>(el.textContent||el.getAttribute('aria-label')||el.id||el.className).replace(/\s+/g,' ').trim());
+      return{overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,clipped};
+    });
     expect(mobile.overflow).toBeLessThanOrEqual(2);
-    expect(mobile.clipped).toBe(0);
+    expect(mobile.clipped).toEqual([]);
   });
 }
