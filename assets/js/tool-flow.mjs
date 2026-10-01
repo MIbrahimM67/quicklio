@@ -177,9 +177,18 @@ if(body?.classList.contains('tool-page')){
       else if(steps[current])status.textContent='Next: '+steps[current].title+'. '+steps[current].description;
     }
 
-    scope.addEventListener('input',()=>{interacted=true;update()},true);
-    scope.addEventListener('change',()=>{interacted=true;update()},true);
-    scope.addEventListener('drop',()=>{interacted=true;setTimeout(update,0)},true);
+    const markInteracted=event=>{
+      if(guide.contains(event.target))return;
+      interacted=true;
+      update();
+    };
+    scope.addEventListener('input',markInteracted,true);
+    scope.addEventListener('change',markInteracted,true);
+    scope.addEventListener('drop',event=>{
+      if(guide.contains(event.target))return;
+      interacted=true;
+      setTimeout(update,0);
+    },true);
     if(primaryAction)primaryAction.addEventListener('click',()=>{
       if(primaryAction.matches('[disabled],[aria-disabled="true"]'))return;
       interacted=true;
@@ -188,7 +197,10 @@ if(body?.classList.contains('tool-page')){
       clearTimeout(busyTimer);
       busyTimer=setTimeout(update,900);
     },true);
-    const observer=new MutationObserver(()=>update());
+    const observer=new MutationObserver(mutations=>{
+      if(mutations.every(mutation=>guide.contains(mutation.target)))return;
+      update();
+    });
     observer.observe(scope,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','disabled','aria-disabled','aria-hidden','class','src']});
     update();
   }
