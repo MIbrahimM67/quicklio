@@ -21,6 +21,17 @@ test('remove color tool makes selected color transparent and downloads PNG',asyn
   expect(download.suggestedFilename()).toBe('red-blue-color-removed.png');
 });
 
+test('remove color tool uses the desktop editor width',async({page})=>{
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto('/en/images/remove-color-from-image/');
+  const workbench=await page.locator('.tool-workbench').boundingBox();
+  const editor=await page.locator('.color-tool-grid>.color-card').first().boundingBox();
+  const controls=await page.locator('.color-controls').boundingBox();
+  expect(workbench?.width).toBeGreaterThan(1000);
+  expect(editor?.width).toBeGreaterThan(650);
+  expect(controls?.x).toBeGreaterThan((editor?.x??0)+(editor?.width??0));
+});
+
 test('remove color tool fits mobile width',async({page})=>{
   await page.setViewportSize({width:375,height:812});
   await page.goto('/en/images/remove-color-from-image/');
