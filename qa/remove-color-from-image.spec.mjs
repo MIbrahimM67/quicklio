@@ -4,7 +4,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4n
 
 test('remove color tool makes selected color transparent and downloads PNG',async({page})=>{
   await page.goto('/en/images/remove-color-from-image/');
-  await expect(page.locator('h1')).toHaveText('Remove Color From Image');
+  await expect(page.locator('h1')).toHaveText('Remove Specific Color From Image');
   await page.locator('#fileInput').setInputFiles({name:'red-blue.png',mimeType:'image/png',buffer:png});
   await expect(page.locator('#fileMeta')).toContainText('2 × 1px');
   await page.locator('#targetColor').evaluate(el=>{el.value='#ff0000';el.dispatchEvent(new Event('input',{bubbles:true}));});
