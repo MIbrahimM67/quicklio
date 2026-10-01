@@ -18,8 +18,13 @@ if(body?.classList.contains('tool-page')){
     const isDownload=el=>/download|save|export|print/i.test(textOf(el))||el.hasAttribute?.('download');
     const isSecondary=el=>/reset|clear|remove file|choose another|back|undo|redo|cancel|delete selected/i.test(textOf(el));
     const downloadTargets=clickable.filter(isDownload);
-    const actionTargets=clickable.filter(el=>!isDownload(el)&&!isSecondary(el)&&!/browse|upload|choose file|select file/i.test(textOf(el)));
-    const primaryAction=actionTargets.find(el=>el.matches('.primary,[data-primary-action]'))||actionTargets[0]||null;
+    const uploadTrigger=fileInputs.length?clickable.find(el=>/^(?:open|choose|browse|upload|select)(?:\s+(?:a|an|the))?\s+(?:pdf|image|file|photo|logo)/i.test(textOf(el))):null;
+    const actionTargets=clickable.filter(el=>el!==uploadTrigger&&!isDownload(el)&&!isSecondary(el)&&!/browse|upload|choose file|select file/i.test(textOf(el)));
+    const primaryPattern=/\b(calculate|generate|convert|remove|analy[sz]e|create|apply|process|split|merge|compress|resize|make|build|check|run)\b/i;
+    const primaryAction=actionTargets.find(el=>el.matches('[data-primary-action]'))
+      ||actionTargets.find(el=>el.matches('.primary')&&primaryPattern.test(textOf(el)))
+      ||actionTargets.find(el=>primaryPattern.test(textOf(el)))
+      ||(!uploadTrigger&&actionTargets.length===1?actionTargets[0]:null);
 
     function cleanLabel(value){
       return(value||'').replace(/[:*]+$/,'').replace(/\s+/g,' ').trim();
@@ -51,6 +56,19 @@ if(body?.classList.contains('tool-page')){
       if(el.tagName==='TEXTAREA')return'Enter the text or values this tool should use.';
       return'Enter or adjust '+label.toLowerCase()+' for your result.';
     }
+    function buttonHelp(label){
+      const value=label.toLowerCase();
+      if(/image.*signature|signature.*image/.test(value))return'Add an image or signature to the document, then position it where you need it.';
+      if(/highlight/.test(value))return'Add a highlight annotation to draw attention to part of the page.';
+      if(/rectangle|shape/.test(value))return'Add a shape annotation that you can place over the document or image.';
+      if(/\bdraw\b|freehand/.test(value))return'Draw freehand marks or annotations directly on the working area.';
+      if(/\btext\b/.test(value))return'Add editable text or a text annotation to the working area.';
+      if(/rotate/.test(value))return'Rotate the currently selected page or item.';
+      if(/delete|remove/.test(value))return'Remove the currently selected page, item, or annotation.';
+      if(/crop/.test(value))return'Choose the area you want to keep and remove the surrounding area.';
+      if(/preview/.test(value))return'Preview how the current settings will affect the final result.';
+      return'Use this action when you want to '+label.toLowerCase()+'.';
+    }
 
     const controlTips=[];
     const seenLabels=new Set();
@@ -61,19 +79,32 @@ if(body?.classList.contains('tool-page')){
       controlTips.push({label,help:nearbyHelp(control)||fallbackHelp(control,label)});
       if(controlTips.length>=7)break;
     }
+    if(controlTips.length<7){
+      for(const button of clickable){
+        if(button===uploadTrigger||button===primaryAction||isDownload(button)||isSecondary(button))continue;
+        const label=cleanLabel(textOf(button));
+        if(!label||label.length>48||seenLabels.has(label.toLowerCase())||/review|support|privacy|next|previous/i.test(label))continue;
+        seenLabels.add(label.toLowerCase());
+        controlTips.push({label,help:buttonHelp(label)});
+        if(controlTips.length>=7)break;
+      }
+    }
 
     const hasUpload=fileInputs.length>0;
-    const hasControls=controls.length>0;
+    const hasSettings=controlTips.length>0;
     const actionLabel=textOf(primaryAction)||(/calculator/i.test(h1)?'Calculate':'Create result');
-    const settingLabels=controlTips.slice(0,3).map(t=>t.label);
+    const settingLabels=controlTips.slice(0,4).map(t=>t.label);
     const settingsDescription=settingLabels.length
-      ?'Adjust '+settingLabels.join(', ')+(controlTips.length>3?', and the other available options.':' when needed.')+' Open the control guide below for a quick explanation of each setting.'
+      ?'Use '+settingLabels.join(', ')+(controlTips.length>4?', and the other available controls.':'.')+' Open the control guide below for a quick explanation of each setting or action.'
       :'Fine-tune the options for the result you want. Open the control guide below if an option is unclear.';
+    const startDescription=hasUpload
+      ?(uploadTrigger?'Choose “'+textOf(uploadTrigger)+'” and select the '+noun+' you want to work with.':'Choose the '+noun+' you want to work with. Nothing is changed until you run the tool.')
+      :'Fill in the main values this tool needs. You can revise them at any time.';
     const steps=[];
-    steps.push({key:'start',title:hasUpload?'Add your '+noun:'Enter your details',description:hasUpload?'Choose the '+noun+' you want to work with. Nothing is changed until you run the tool.':'Fill in the main values this tool needs. You can revise them at any time.'});
-    if(hasControls)steps.push({key:'settings',title:'Choose your settings',description:settingsDescription});
+    steps.push({key:'start',title:hasUpload?'Add your '+noun:'Enter your details',description:startDescription});
+    if(hasSettings)steps.push({key:'settings',title:'Choose your settings',description:settingsDescription});
     if(primaryAction)steps.push({key:'run',title:'Run the tool',description:'When the setup looks right, choose “'+actionLabel+'”. Quicklio will keep you on this page while it processes the result.'});
-    steps.push({key:'result',title:'Review your result',description:downloadTargets.length?'Check the final result. If you want changes, adjust the settings and run it again; otherwise download or save it.':'Check the result. If it needs changes, adjust the inputs above and try again.'});
+    steps.push({key:'result',title:'Review your result',description:downloadTargets.length?'Check the final result. If you want changes, adjust the settings and run it again; otherwise download or save it.':'Check the result. If it needs changes, adjust the inputs or actions above and try again.'});
 
     const guide=document.createElement('section');
     guide.className='tool-flow-guide shell';
@@ -124,7 +155,7 @@ if(body?.classList.contains('tool-page')){
         if(!hasFile())return 0;
         i=1;
       }else if(interacted)i=1;
-      if(hasControls&&steps[i]?.key==='settings'){
+      if(hasSettings&&steps[i]?.key==='settings'){
         if(!interacted&&hasUpload)return i;
         i++;
       }
