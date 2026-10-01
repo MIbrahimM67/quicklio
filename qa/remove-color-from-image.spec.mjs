@@ -21,6 +21,27 @@ test('remove color tool makes selected color transparent and downloads PNG',asyn
   expect(download.suggestedFilename()).toBe('red-blue-color-removed.png');
 });
 
+test('remove color guide follows upload settings run review sequence',async({page})=>{
+  await page.goto('/en/images/remove-color-from-image/');
+  const guide=page.locator('[data-tool-flow-guide]');
+  await expect(guide.locator('[data-flow-step]')).toHaveCount(4);
+  await expect(guide.locator('[data-flow-step="start"]')).toContainText('Add your image');
+  await expect(guide.locator('[data-flow-step="settings"]')).toContainText('Choose your settings');
+  await expect(guide.locator('[data-flow-step="run"]')).toContainText('Run the tool');
+  await expect(guide.locator('[data-flow-step="result"]')).toContainText('Review your result');
+  await expect(guide).toContainText('Tolerance');
+  await expect(guide).toContainText('Edge softness');
+
+  await page.locator('#fileInput').setInputFiles({name:'red-blue.png',mimeType:'image/png',buffer:png});
+  await expect(guide.locator('[data-flow-step="settings"]')).toHaveClass(/is-current/);
+  await page.locator('#targetColor').evaluate(el=>{el.value='#ff0000';el.dispatchEvent(new Event('input',{bubbles:true}));});
+  await expect(guide.locator('[data-flow-step="run"]')).toHaveClass(/is-current/);
+  await page.locator('#removeBtn').click();
+  await expect(guide.locator('[data-tool-flow-progress]')).toHaveText('Complete');
+  await expect(guide.locator('[data-tool-flow-result-note]')).toBeVisible();
+  await expect(guide).toContainText('Result ready');
+});
+
 test('remove color tool uses the desktop editor width',async({page})=>{
   await page.setViewportSize({width:1440,height:900});
   await page.goto('/en/images/remove-color-from-image/');
