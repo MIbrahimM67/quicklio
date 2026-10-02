@@ -1,5 +1,15 @@
 name: Browser QA
 on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'en/**'
+      - 'assets/css/**'
+      - 'assets/js/**'
+      - 'qa/**'
+      - 'playwright.config.mjs'
+      - 'design.md'
+      - '.github/workflows/browser-qa.yml'
   push:
     branches: [main]
     paths:

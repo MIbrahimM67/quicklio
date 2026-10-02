@@ -1,5 +1,5 @@
 import{pdfjsLib}from'/assets/js/pdfjs-browser.mjs';
-import{scanPdfColorSpaces,summarizePageOperatorNames,buildColorReport}from'/assets/js/pdf-color-space-core.mjs';
+import{scanPdfColorSpaces,scanPdfContentPaintOperators,summarizePageOperatorNames,buildColorReport}from'/assets/js/pdf-color-space-core.mjs';
 
 const $=s=>document.querySelector(s);
 const input=$('#pdfInput');
@@ -42,7 +42,7 @@ function render(report,raw){
   ];
   const summary=$('#summaryGrid');
   summary.replaceChildren();
-  for(const [label,value] of items){
+  for(const[label,value]of items){
     const card=document.createElement('article');
     const small=document.createElement('span');small.textContent=label;
     const strong=document.createElement('strong');strong.textContent=text(value);
@@ -67,7 +67,7 @@ function render(report,raw){
   const spaces=$('#declaredSpaces');spaces.replaceChildren();
   const found=Object.entries(raw.counts).filter(([,count])=>count>0);
   if(!found.length){const li=document.createElement('li');li.textContent='No standard color-space declaration tokens were found in readable PDF structure.';spaces.append(li);}
-  for(const [name,count] of found){const li=document.createElement('li');li.textContent=`${name}: ${count}`;spaces.append(li);}
+  for(const[name,count]of found){const li=document.createElement('li');li.textContent=`${name}: ${count}`;spaces.append(li);}
 
   const spots=$('#spotNames');spots.replaceChildren();
   if(!raw.spots.length){const li=document.createElement('li');li.textContent='No named Separation or DeviceN inks found.';spots.append(li);}
@@ -91,6 +91,7 @@ async function analyze(file){
   try{
     const bytes=new Uint8Array(await file.arrayBuffer());
     const raw=scanPdfColorSpaces(bytes);
+    raw.originalPaint=await scanPdfContentPaintOperators(bytes);
     const pdf=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
     fileMeta.textContent=`${file.name} · ${pdf.numPages} page${pdf.numPages===1?'':'s'} · ${bytesLabel(file.size)}`;
     const pages=[];
