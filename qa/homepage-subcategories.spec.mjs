@@ -21,8 +21,10 @@ test('homepage groups every tool into task-oriented subcategories',async({page})
 
 test('homepage category filters hide empty subcategory sections and keep matching tools',async({page})=>{
   await page.goto('/');
+  const expectedImages=await page.locator('[data-tool-card][data-category="image"]').count();
+  expect(expectedImages).toBeGreaterThan(0);
   await page.locator('[data-tool-filter="image"]').click();
-  await expect(page.locator('[data-tool-card]:visible')).toHaveCount(8);
+  await expect(page.locator('[data-tool-card]:visible')).toHaveCount(expectedImages);
   await expect(page.locator('[data-tool-group="images-photos"]')).toBeVisible();
   await expect(page.locator('[data-tool-group="pdf-essentials"]')).toBeHidden();
   await expect(page.locator('[data-tool-group-jump]:visible')).toHaveCount(1);
@@ -30,8 +32,11 @@ test('homepage category filters hide empty subcategory sections and keep matchin
 
 test('homepage search keeps only subcategories that contain matching cards',async({page})=>{
   await page.goto('/');
+  const query='cricut';
+  const expectedMatches=await page.locator('[data-tool-card]').evaluateAll((cards,q)=>cards.filter(card=>((card.dataset.search||card.textContent||'').toLowerCase()).includes(q)).length,query);
+  expect(expectedMatches).toBeGreaterThan(0);
   await page.locator('[data-tool-search]').fill('Cricut');
-  await expect(page.locator('[data-tool-card]:visible')).toHaveCount(2);
+  await expect(page.locator('[data-tool-card]:visible')).toHaveCount(expectedMatches);
   await expect(page.locator('[data-tool-group="crafts-makers"]')).toBeVisible();
   await expect(page.locator('[data-tool-group="images-photos"]')).toBeHidden();
   await expect(page.locator('[data-tools-empty]')).toBeHidden();

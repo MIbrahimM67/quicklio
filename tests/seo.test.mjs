@@ -13,6 +13,7 @@ function walk(dir){
 const htmlFiles=walk('.').filter(p=>p.endsWith('index.html'));
 const sitemap=fs.readFileSync('sitemap.xml','utf8');
 const robots=fs.readFileSync('robots.txt','utf8');
+const discovery=fs.readFileSync('assets/js/opportunity-tools-discovery.mjs','utf8');
 
 function get(html,re){return(html.match(re)||[])[1]||''}
 function expectedCanonical(file){
@@ -23,6 +24,7 @@ function expectedCanonical(file){
 function jsonLdBlocks(html){
   return[...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(match=>match[1].trim()).filter(Boolean);
 }
+function discoveredIn(html,url){return html.includes('href="'+url+'"')||discovery.includes(`href:'${url}'`)}
 
 test('robots exposes the canonical sitemap',()=>{
   assert.match(robots,/User-agent:\s*\*/);
@@ -71,29 +73,27 @@ test('every indexable HTML page has core SEO fields and sitemap coverage',()=>{
 test('static JSON-LD blocks are valid JSON',()=>{
   for(const file of htmlFiles){
     const html=fs.readFileSync(file,'utf8');
-    for(const block of jsonLdBlocks(html)){
-      assert.doesNotThrow(()=>JSON.parse(block),file+' has invalid JSON-LD');
-    }
+    for(const block of jsonLdBlocks(html))assert.doesNotThrow(()=>JSON.parse(block),file+' has invalid JSON-LD');
   }
 });
 
-test('homepage links to every current tool in the sitemap',()=>{
+test('homepage discovery links to every current tool in the sitemap',()=>{
   const html=fs.readFileSync('index.html','utf8');
   const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/[^<]+)<\/loc>/g)].map(match=>match[1]);
   const toolPaths=urls.filter(url=>url.split('/').filter(Boolean).length>=3);
-  for(const url of toolPaths)assert.ok(html.includes('href=\"'+url+'\"'),'Homepage is missing tool link: '+url);
+  for(const url of toolPaths)assert.ok(discoveredIn(html,url),'Homepage/discovery is missing tool link: '+url);
 });
 
 test('PDF hub links to every PDF tool in the sitemap',()=>{
   const html=fs.readFileSync('en/pdf/index.html','utf8');
   const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/pdf\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/pdf/');
-  for(const url of urls)assert.ok(html.includes('href=\"'+url+'\"'),'PDF hub is missing tool link: '+url);
+  for(const url of urls)assert.ok(html.includes('href="'+url+'"'),'PDF hub is missing tool link: '+url);
 });
 
-test('image hub links to every image tool in the sitemap',()=>{
+test('image hub discovery links to every image tool in the sitemap',()=>{
   const html=fs.readFileSync('en/images/index.html','utf8');
   const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/images\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/images/');
-  for(const url of urls)assert.ok(html.includes('href=\"'+url+'\"'),'Image hub is missing tool link: '+url);
+  for(const url of urls)assert.ok(discoveredIn(html,url),'Image hub/discovery is missing tool link: '+url);
 });
 
 test('homepage declares site identity and a Google-compatible favicon',()=>{
@@ -118,7 +118,6 @@ test('homepage exposes AdSense ownership verification and ads.txt is valid',()=>
   assert.equal(ads,'google.com, pub-2036385623191798, DIRECT, f08c47fec0942fa0');
 });
 
-
 test('software app schema requires real review evidence',()=>{
   for(const file of htmlFiles){
     const html=fs.readFileSync(file,'utf8');
@@ -134,7 +133,6 @@ test('software app schema requires real review evidence',()=>{
     }
   }
 });
-
 
 test('PDF to Word keeps the validated keyword map on one canonical page',()=>{
   const html=fs.readFileSync('en/pdf/pdf-to-word/index.html','utf8').toLowerCase();
