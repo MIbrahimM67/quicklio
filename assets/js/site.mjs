@@ -1,3 +1,4 @@
+import '/assets/js/new-tools-nav.mjs';
 import '/assets/js/site-base.mjs';
 
 if(document.body.classList.contains('tool-page')){
