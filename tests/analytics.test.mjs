@@ -13,6 +13,7 @@ function walk(dir){
 const htmlFiles=walk('.').filter(p=>p.endsWith('index.html'));
 const siteLoader=fs.readFileSync('assets/js/site.mjs','utf8');
 const siteRuntime=fs.readFileSync('assets/js/site-base.mjs','utf8');
+const analyticsGuard=fs.readFileSync('assets/js/analytics-network-guard.mjs','utf8');
 const siteJs=siteLoader+'\n'+siteRuntime;
 const privacy=fs.readFileSync('privacy/index.html','utf8');
 
@@ -29,6 +30,14 @@ test('analytics is consent-gated with ads disabled',()=>{
   assert.match(siteJs,/analytics_storage:'granted'/);
   assert.match(siteJs,/Accept analytics/);
   assert.match(siteJs,/Privacy choices/);
+});
+
+test('analytics network calls only load on production hosts',()=>{
+  assert.ok(siteLoader.indexOf('analytics-network-guard.mjs')<siteLoader.indexOf('site-base.mjs'));
+  assert.match(analyticsGuard,/quicklio\.app/);
+  assert.match(analyticsGuard,/www\.quicklio\.app/);
+  assert.match(analyticsGuard,/googletagmanager\.com/);
+  assert.match(analyticsGuard,/HTMLScriptElement/);
 });
 
 test('all public HTML pages load the shared site script',()=>{
