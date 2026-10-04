@@ -31,12 +31,14 @@ test('remove color tool makes selected color transparent and downloads PNG',asyn
   await expect(page.locator('#downloadBtn')).toBeEnabled();
 });
 
-test('remove color tool records each export funnel stage',async({page})=>{
+test('remove color tool records each export funnel stage from the result CTA',async({page})=>{
   await page.goto('/en/images/remove-color-from-image/');
   await page.locator('[data-analytics-accept]').click();
   await prepareResult(page);
+  await expect(page.locator('#resultDownloadBtn')).toBeVisible();
+  await expect(page.locator('#resultDownloadBtn')).toBeEnabled();
   const downloadPromise=page.waitForEvent('download');
-  await page.locator('#downloadBtn').click();
+  await page.locator('#resultDownloadBtn').click();
   await downloadPromise;
   await expect.poll(()=>trackedEvents(page)).toEqual(expect.arrayContaining([
     'remove_color_file_loaded',
