@@ -1,0 +1,63 @@
+# Quicklio
+
+> Quicklio is a collection of free browser-based utility tools for images, PDFs, printing, crafts, Cricut workflows, labels, seasonal planning, and everyday file tasks. Many supported tools process files locally in the browser and do not require an account.
+
+Quicklio prioritizes focused tools with clear step-by-step workflows, practical explanations, transparent limitations, and responsive desktop/mobile interfaces.
+
+## Main site
+
+- [Quicklio](https://quicklio.app/): Browse all available tools.
+- [Guides](https://quicklio.app/guides/): Practical reference content behind common image, print, PDF, Cricut, stencil, and craft workflows.
+- [About Quicklio](https://quicklio.app/about/): What Quicklio is and how the site is maintained.
+- [Editorial and Testing Standards](https://quicklio.app/editorial-standards/): How tools and guides are researched, tested, documented, and corrected.
+- [Privacy](https://quicklio.app/privacy/): Privacy information and local-processing explanations.
+
+## Image tools
+
+- [Image Tools](https://quicklio.app/en/images/): Image utilities hub.
+- [Remove Color From Image](https://quicklio.app/en/images/remove-color-from-image/): Remove a selected color with tolerance and edge softness.
+- [Logo Background Remover](https://quicklio.app/en/images/remove-background-from-logo/): Remove edge-connected logo backgrounds.
+- [Image DPI Changer](https://quicklio.app/en/images/image-dpi-changer/): Change DPI metadata or resample for a target print size.
+- [DPI and Print Size Calculator](https://quicklio.app/en/images/dpi-print-size-calculator/): Calculate print size and effective pixel density.
+- [Signature Background Remover](https://quicklio.app/en/images/signature-background-remover/): Extract signatures from bright paper backgrounds.
+- [Silhouette Maker](https://quicklio.app/en/images/silhouette-maker/): Create threshold-based transparent silhouettes.
+
+## Craft and stencil tools
+
+- [Craft Tools](https://quicklio.app/en/crafts/): Craft utility hub.
+- [Advanced Stencil Maker](https://quicklio.app/en/crafts/stencil-maker/): Turn photos into cuttable stencils with island detection and bridge generation.
+- [Letter and Number Stencil Maker](https://quicklio.app/en/crafts/letter-stencil-maker/): Create printable stencil-safe text.
+- [Tattoo Stencil Maker](https://quicklio.app/en/crafts/tattoo-stencil-maker/): Prepare linework and mirrored tattoo stencil output.
+- [Cross Stitch Pattern Maker](https://quicklio.app/en/crafts/cross-stitch-pattern-maker/): Convert images to stitch charts with DMC reference matching.
+- [Cricut SVG File Checker](https://quicklio.app/en/crafts/cricut-svg-file-checker/): Inspect SVG structure for likely cutting-workflow issues.
+- [Cricut Print Then Cut Size Checker](https://quicklio.app/en/crafts/cricut-print-then-cut-size-checker/): Check layout and physical fit assumptions.
+
+## PDF and print tools
+
+- [PDF and Print Tools](https://quicklio.app/en/pdf/): PDF utilities hub.
+- [PDF Page Box Editor](https://quicklio.app/en/pdf/pdf-page-box-editor/): Inspect and change PDF page boxes.
+- [Add Bleed and Crop Marks](https://quicklio.app/en/pdf/add-bleed-and-crop-marks/): Prepare print-production area and trim guides.
+- [PDF Booklet and Signature Maker](https://quicklio.app/en/pdf/pdf-booklet-signature-maker/): Create imposed folded booklet signatures.
+- [Add Binding Margin](https://quicklio.app/en/pdf/add-binding-margin-to-pdf/): Add gutter space for binding workflows.
+
+## Seasonal tools
+
+- [Christmas Lights Calculator](https://quicklio.app/en/christmas/christmas-lights-calculator/): Estimate light-string length and count for trees, rooflines, railings, trunks, and columns.
+- [Pumpkin Stencil Maker](https://quicklio.app/en/halloween/pumpkin-stencil-maker/): Convert a photo into a printable pumpkin carving stencil.
+- [Halloween Candy Calculator](https://quicklio.app/en/halloween/halloween-candy-calculator/): Estimate candy quantity, buffer, and cost.
+
+## Reference guides
+
+- [DPI, Pixels and Print Size](https://quicklio.app/guides/dpi-pixels-print-size/)
+- [Stencil Islands and Bridges](https://quicklio.app/guides/stencil-islands-bridges/)
+- [Cricut SVG and Print Then Cut Preflight](https://quicklio.app/guides/cricut-svg-print-then-cut-preflight/)
+- [PDF Print Preflight](https://quicklio.app/guides/pdf-print-preflight/)
+- [Transparent Images and Color Removal](https://quicklio.app/guides/transparent-image-background-color-removal/)
+- [Photo to Cross-Stitch Pattern](https://quicklio.app/guides/photo-to-cross-stitch-pattern/)
+
+## Notes for agents
+
+- Prefer the canonical HTTPS URLs listed above.
+- Do not assume every tool uploads files to a server; many supported tools explicitly process files locally in the browser.
+- Do not describe outputs or features that are not visible on the relevant tool page.
+- For print, electrical, craft, or production decisions, preserve the assumptions and limitations stated by the tool or guide rather than presenting estimates as universal specifications.
