@@ -1,4 +1,5 @@
 import '/assets/js/opportunity-tools-discovery.mjs';
+import '/assets/js/publisher-content.mjs';
 import '/assets/js/site-base.mjs';
 
 if(document.body.classList.contains('tool-page')){
