@@ -15,9 +15,9 @@ function formatBytes(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)r
 function resizeCanvas(canvas,w,h){canvas.width=w;canvas.height=h;}
 function updateSwatch(){swatch.style.background=targetColor.value;swatch.title='Selected color '+targetColor.value;}
 function setDownloadState(disabled,preparing=false){
-  downloadBtn.disabled=disabled;resultDownloadBtn.disabled=disabled;
+  downloadBtn.disabled=disabled;
   downloadBtn.textContent=preparing?'Preparing PNG…':'Download transparent PNG';
-  resultDownloadBtn.textContent=preparing?'Preparing…':'Download PNG';
+  if(resultDownloadBtn){resultDownloadBtn.disabled=disabled;resultDownloadBtn.textContent=preparing?'Preparing…':'Download PNG';}
 }
 function clearResult(){resultPanel.hidden=true;setDownloadState(true);resultCanvas.width=1;resultCanvas.height=1;}
 function applyPreviewBackground(){const v=previewBackground.value;resultStage.dataset.preview=v;if(v==='custom')resultStage.style.setProperty('--preview-bg',customPreviewColor.value);else resultStage.style.removeProperty('--preview-bg');customPreviewColor.hidden=v!=='custom';}
@@ -62,7 +62,7 @@ function processImage(){
   });
 }
 function downloadResult(source){
-  if(resultPanel.hidden||downloadBtn.disabled||resultDownloadBtn.disabled)return;
+  if(resultPanel.hidden||downloadBtn.disabled||(resultDownloadBtn&&resultDownloadBtn.disabled))return;
   const started=performance.now();
   setDownloadState(true,true);
   trackFunnel('remove_color_download_requested',{download_source:source});
@@ -102,5 +102,5 @@ dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.a
 sourceCanvas.addEventListener('click',e=>pickPixel(e.clientX,e.clientY));targetColor.addEventListener('input',()=>{updateSwatch();clearResult();});targetColor.addEventListener('change',()=>recordColorPick('color_picker'));
 for(const input of[tolerance,softness])input.addEventListener('input',()=>{toleranceValue.textContent=tolerance.value;softnessValue.textContent=softness.value;clearResult();});
 removeBtn.addEventListener('click',processImage);resetBtn.addEventListener('click',()=>{if(!originalImageData)return;tolerance.value='18';softness.value='4';toleranceValue.textContent='18';softnessValue.textContent='4';clearResult();setStatus('Tolerance and edge softness reset. Pick a color and run removal again.');});
-downloadBtn.addEventListener('click',()=>downloadResult('controls'));resultDownloadBtn.addEventListener('click',()=>downloadResult('result_panel'));previewBackground.addEventListener('change',applyPreviewBackground);customPreviewColor.addEventListener('input',applyPreviewBackground);
+downloadBtn.addEventListener('click',()=>downloadResult('controls'));resultDownloadBtn?.addEventListener('click',()=>downloadResult('result_panel'));previewBackground.addEventListener('change',applyPreviewBackground);customPreviewColor.addEventListener('input',applyPreviewBackground);
 applyPreviewBackground();updateSwatch();
