@@ -3,6 +3,11 @@ function positive(value, label) {
   if (!Number.isFinite(n) || n <= 0) throw Error(`${label} must be greater than zero.`);
   return n;
 }
+function nonNegative(value, label) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) throw Error(`${label} cannot be negative.`);
+  return n;
+}
 function percent(value) {
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0 || n > 200) throw Error('Buffer must be between 0% and 200%.');
@@ -50,4 +55,15 @@ export function calculateTreeLights({ heightFeet, baseDiameterFeet, wrapSpacingI
   }
   const purchase = calculatePurchase(path, strandLengthFeet, lightsPerStrand, bufferPercent);
   return { ...purchase, turns, risePerTurn };
+}
+export function calculateElectricalLoad({ strings, wattsPerString, hoursPerDay = 0, days = 0, electricityRatePerKwh = 0 }) {
+  const count = positive(strings, 'String count');
+  const watts = positive(wattsPerString, 'Watts per string');
+  const hours = nonNegative(hoursPerDay, 'Hours per day');
+  const runDays = nonNegative(days, 'Days');
+  const rate = nonNegative(electricityRatePerKwh, 'Electricity rate');
+  const totalWatts = count * watts;
+  const totalKwh = (totalWatts * hours * runDays) / 1000;
+  const estimatedCost = totalKwh * rate;
+  return { strings: count, wattsPerString: watts, totalWatts, hoursPerDay: hours, days: runDays, totalKwh, electricityRatePerKwh: rate, estimatedCost };
 }
