@@ -1,5 +1,6 @@
 import '/assets/js/opportunity-tools-discovery.mjs';
 import '/assets/js/publisher-content.mjs';
+import '/assets/js/indexing-discovery.mjs';
 import '/assets/js/analytics-network-guard.mjs';
 import '/assets/js/site-base.mjs';
 
