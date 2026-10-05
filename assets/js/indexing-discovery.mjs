@@ -7,7 +7,9 @@ const resources={
 '/en/pdf/add-bleed-and-crop-marks/':{title:'Add Bleed & Crop Marks',desc:'Prepare artwork for trimming with configurable bleed and printer crop marks.'},
 '/en/pdf/merge-pdf/':{title:'Merge PDF',desc:'Combine multiple PDF files into one document in the order you choose.'},
 '/en/pdf/pdf-to-word/':{title:'PDF to Word Converter',desc:'Create an editable DOCX with scan detection and optional OCR.'},
-'/en/pdf/pdf-page-box-editor/':{title:'PDF Page Box Editor',desc:'Inspect and edit TrimBox, BleedBox, CropBox, MediaBox, and ArtBox.'}
+'/en/pdf/pdf-page-box-editor/':{title:'PDF Page Box Editor',desc:'Inspect and edit TrimBox, BleedBox, CropBox, MediaBox, and ArtBox.'},
+'/en/halloween/halloween-candy-calculator/':{title:'Halloween Candy Calculator',desc:'Estimate candy pieces, bags, buffer, and optional cost for trick-or-treat night.'},
+'/en/halloween/pumpkin-stencil-maker/':{title:'Pumpkin Stencil Maker',desc:'Turn a photo into a printable pumpkin carving stencil.'}
 };
 const relatedByPath={
 '/en/crafts/':['/guides/cricut-svg-print-then-cut-preflight/','/guides/photo-to-cross-stitch-pattern/'],
@@ -30,7 +32,9 @@ const relatedByPath={
 '/en/pdf/split-pdf/':['/en/pdf/merge-pdf/','/en/pdf/online-pdf-editor/'],
 '/en/pdf/image-to-pdf/':['/en/pdf/merge-pdf/'],
 '/en/pdf/pdf-to-jpg/':['/en/pdf/pdf-to-word/'],
-'/en/print/split-image-for-printing/':['/en/pdf/add-bleed-and-crop-marks/']
+'/en/print/split-image-for-printing/':['/en/pdf/add-bleed-and-crop-marks/'],
+'/en/halloween/halloween-candy-calculator/':['/en/halloween/pumpkin-stencil-maker/'],
+'/en/halloween/pumpkin-stencil-maker/':['/en/halloween/halloween-candy-calculator/']
 };
 const path=location.pathname;
 const related=(relatedByPath[path]||[]).map(href=>({href,...resources[href]})).filter(item=>item.title);
