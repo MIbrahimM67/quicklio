@@ -150,3 +150,20 @@ test('PDF to Word keeps the validated keyword map on one canonical page',()=>{
   assert.ok(!sitemap.includes('pdf-to-word-online'),'Do not split PDF to Word synonyms into doorway URLs');
   assert.ok(!sitemap.includes('pdf-to-docx'),'Do not split PDF to DOCX into a duplicate tool URL');
 });
+
+
+test('indexable HTML pages have complete static social metadata',()=>{
+  for(const file of htmlFiles){
+    const html=fs.readFileSync(file,'utf8');
+    const robotsMeta=get(html,/<meta name="robots" content="([^"]+)"/i).toLowerCase();
+    if(robotsMeta.includes('noindex'))continue;
+    assert.match(html,/<meta property="og:title" content="[^"]+">/i,file+' missing og:title');
+    assert.match(html,/<meta property="og:description" content="[^"]+">/i,file+' missing og:description');
+    assert.match(html,/<meta property="og:url" content="https:\/\/quicklio\.app\/[^"]*">/i,file+' missing og:url');
+    assert.match(html,/<meta property="og:image" content="https:\/\/quicklio\.app\/assets\/brand\/quicklio-favicon\.png">/i,file+' missing og:image');
+    assert.match(html,/<meta name="twitter:card" content="summary">/i,file+' missing twitter:card');
+    assert.match(html,/<meta name="twitter:title" content="[^"]+">/i,file+' missing twitter:title');
+    assert.match(html,/<meta name="twitter:description" content="[^"]+">/i,file+' missing twitter:description');
+    assert.match(html,/<meta name="twitter:image" content="https:\/\/quicklio\.app\/assets\/brand\/quicklio-favicon\.png">/i,file+' missing twitter:image');
+  }
+});
