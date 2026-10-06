@@ -90,10 +90,16 @@ test('PDF hub links to every PDF tool in the sitemap',()=>{
   for(const url of urls)assert.ok(html.includes('href="'+url+'"'),'PDF hub is missing tool link: '+url);
 });
 
-test('image hub discovery links to every image tool in the sitemap',()=>{
+test('image hub statically links to every image tool in the sitemap',()=>{
   const html=fs.readFileSync('en/images/index.html','utf8');
   const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/images\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/images/');
-  for(const url of urls)assert.ok(discoveredIn(html,url),'Image hub/discovery is missing tool link: '+url);
+  for(const url of urls)assert.ok(html.includes('href="'+url+'"'),'Image hub is missing static tool link: '+url);
+});
+
+test('craft hub statically links to every craft tool in the sitemap',()=>{
+  const html=fs.readFileSync('en/crafts/index.html','utf8');
+  const urls=[...sitemap.matchAll(/<loc>https:\/\/quicklio\.app(\/en\/crafts\/[^<]+)<\/loc>/g)].map(match=>match[1]).filter(url=>url!=='/en/crafts/');
+  for(const url of urls)assert.ok(html.includes('href="'+url+'"'),'Craft hub is missing static tool link: '+url);
 });
 
 test('homepage declares site identity and a Google-compatible favicon',()=>{
