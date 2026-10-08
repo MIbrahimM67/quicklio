@@ -167,3 +167,16 @@ test('indexable HTML pages have complete static social metadata',()=>{
     assert.match(html,/<meta name="twitter:image" content="https:\/\/quicklio\.app\/assets\/brand\/quicklio-favicon\.png">/i,file+' missing twitter:image');
   }
 });
+
+
+test('homepage gives priority links to proven growth pages',()=>{
+  const html=fs.readFileSync('index.html','utf8');
+  assert.match(html,/data-growth-priority/);
+  for(const url of[
+    '/en/print/split-image-for-printing/',
+    '/en/images/resize-image-to-exact-kb/',
+    '/en/pdf/pdf-to-word/',
+    '/en/crafts/cricut-print-then-cut-size-checker/',
+    '/en/halloween/pumpkin-stencil-maker/'
+  ])assert.ok(html.includes('href="'+url+'"'),'Homepage growth block missing '+url);
+});
