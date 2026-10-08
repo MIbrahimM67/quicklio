@@ -3,6 +3,7 @@
  * design-system: design.md · designed-as-app
  */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('/assets/css/tool-flow.css');
 
 *{box-sizing:border-box}
 :root{

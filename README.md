@@ -1,6 +1,15 @@
 # Quicklio
 
-Static, browser-only tools site. No framework and no build step.
+[Open Quicklio](https://quicklio.app/) — free browser-based tools for images, PDFs, print preparation, crafts, calculations, and everyday file tasks.
+
+Quicklio processes supported files locally in the browser where possible. No framework and no build step.
+
+## Popular live tools
+- [Resize Image to Exact KB](https://quicklio.app/en/images/resize-image-to-exact-kb/)
+- [Split Image for Printing Across Multiple Pages](https://quicklio.app/en/print/split-image-for-printing/)
+- [PDF to Word](https://quicklio.app/en/pdf/pdf-to-word/)
+- [Cricut Print Then Cut Size Checker](https://quicklio.app/en/crafts/cricut-print-then-cut-size-checker/)
+- [DPI & Print Size Calculator](https://quicklio.app/en/images/dpi-print-size-calculator/)
 
 ## Tools
 - `/en/candles/candle-fragrance-calculator/`
@@ -14,7 +23,8 @@ Static, browser-only tools site. No framework and no build step.
 - `/en/images/photo-to-line-drawing/`
 - `/en/social/instagram-no-crop-image-resizer/`
 - `/en/finance/payday-bills-planner/`
-- `/en/crafts/yarn-amount-calculator/`\n- `/en/crafts/cricut-print-then-cut-size-checker/`
+- `/en/crafts/yarn-amount-calculator/`
+- `/en/crafts/cricut-print-then-cut-size-checker/`
 
 - `/en/images/passport-photo-maker/`
 - `/en/print/split-image-for-printing/`

@@ -5,7 +5,10 @@ export const inToPt=inch=>Number(inch)*PT_PER_IN;
 export const ptToPx=(pt,dpi=144)=>Number(pt)*Number(dpi)/72;
 export const PAPER={
   letter:{width:612,height:792,label:"Letter"},
+  legal:{width:612,height:1008,label:"Legal"},
+  tabloid:{width:792,height:1224,label:"Tabloid / Ledger"},
   a4:{width:mmToPt(210),height:mmToPt(297),label:"A4"},
+  a3:{width:mmToPt(297),height:mmToPt(420),label:"A3"},
   photo4x6:{width:inToPt(4),height:inToPt(6),label:"4 × 6 in"},
   photo5x7:{width:inToPt(5),height:inToPt(7),label:"5 × 7 in"},
   photo10x15:{width:mmToPt(100),height:mmToPt(150),label:"10 × 15 cm"}
@@ -59,7 +62,7 @@ export function posterPlan({imageWidth,imageHeight,pageWidth,pageHeight,cols,row
   const image=fitRect(imageWidth,imageHeight,posterWidth,posterHeight,"contain");
   const tiles=[];
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)tiles.push({row:r,col:c,x:c*(pageWidth-overlap),y:r*(pageHeight-overlap),width:pageWidth,height:pageHeight});
-  return{posterWidth,posterHeight,image,tiles,pageCount:tiles.length};
+  return{posterWidth,posterHeight,image,tiles,pageCount:tiles.length,cols,rows};
 }
 
 export function posterPlanForSize({imageWidth,imageHeight,pageWidth,pageHeight,posterWidth,posterHeight,overlap=0}){

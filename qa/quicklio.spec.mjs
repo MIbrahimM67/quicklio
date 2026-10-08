@@ -163,10 +163,13 @@ test('passport photo maker renders 600px US photo and print sheet',async({page})
 
 test('poster splitter builds tiled PDF',async({page})=>{
   await page.goto('/en/print/split-image-for-printing/');
+  await page.locator('#paper').selectOption('legal');
+  await page.locator('#margin').fill('6');
   await page.locator('#fileInput').setInputFiles({name:'poster.svg',mimeType:'image/svg+xml',buffer:svg(1200,800,'#cc6b3e')});
   await page.locator('#cols').fill('2');
   await page.locator('#rows').fill('2');
   await expect(page.locator('#planMeta')).toContainText('4 pages');
+  await expect(page.locator('#planMeta')).toContainText('effective DPI');
   await page.locator('#buildBtn').click();
   await expect(page.locator('#downloadBtn')).toBeEnabled({timeout:15000});
   await expect(page.locator('#status')).toContainText('Poster PDF ready');
