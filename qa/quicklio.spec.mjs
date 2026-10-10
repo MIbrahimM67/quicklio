@@ -355,12 +355,25 @@ test('images to PDF respects image batch and downloads',async({page})=>{
   ]);
   await expect(page.locator('.reorder-thumb')).toHaveCount(2);
   await expect(page.locator('#batchSize')).not.toHaveText('0 B');
+  await expect(page.locator('#cropPreviewMeta')).toContainText('a.svg');
   await page.locator('#compression').selectOption('smart');
   const download=page.waitForEvent('download');
   await page.locator('#buildBtn').click();
   await download;
   await expect(page.locator('#status')).toContainText('PDF downloaded');
   await expect(page.locator('#status')).toContainText('input →');
+});
+
+test('images to PDF auto crop detects a photographed light document and can be overridden',async({page})=>{
+  await page.goto('/en/pdf/image-to-pdf/');
+  const svgDoc=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1400"><rect width="1000" height="1400" fill="#292929"/><rect x="120" y="70" width="800" height="1260" rx="4" fill="#f2f0e8"/><g stroke="#777" stroke-width="4">'+Array.from({length:18},(_,i)=>'<line x1="190" y1="'+(180+i*52)+'" x2="810" y2="'+(180+i*52)+'"/>').join('')+'</g></svg>');
+  await page.locator('#fileInput').setInputFiles({name:'document.svg',mimeType:'image/svg+xml',buffer:svgDoc});
+  await expect(page.locator('#cropPreviewMeta')).toContainText('Auto crop');
+  await expect(page.locator('#useFullImage')).toBeEnabled();
+  await page.locator('#useFullImage').click();
+  await expect(page.locator('#cropPreviewMeta')).toContainText('overridden');
+  await page.locator('#useAutoCrop').click();
+  await expect(page.locator('#cropPreviewMeta')).toContainText('Auto crop');
 });
 
 test('crop PDF downloads cropped pages',async({page})=>{
