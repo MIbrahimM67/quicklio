@@ -354,10 +354,13 @@ test('images to PDF respects image batch and downloads',async({page})=>{
     {name:'b.svg',mimeType:'image/svg+xml',buffer:svg(600,800,'#315dd8')}
   ]);
   await expect(page.locator('.reorder-thumb')).toHaveCount(2);
+  await expect(page.locator('#batchSize')).not.toHaveText('0 B');
+  await page.locator('#compression').selectOption('smart');
   const download=page.waitForEvent('download');
   await page.locator('#buildBtn').click();
   await download;
   await expect(page.locator('#status')).toContainText('PDF downloaded');
+  await expect(page.locator('#status')).toContainText('input →');
 });
 
 test('crop PDF downloads cropped pages',async({page})=>{
