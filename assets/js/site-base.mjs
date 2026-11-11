@@ -130,7 +130,7 @@ document.addEventListener('pointerdown',(event)=>{
 /* ── Homepage tool subcategories ── */
 (function(){
   if(!document.body.classList.contains('site-home'))return;
-  const grid=document.querySelector('.tool-card-grid');
+  const grid=document.querySelector('.popular-section .tool-card-grid');
   const homepageCards=grid?[...grid.querySelectorAll(':scope > [data-tool-card]')]:[];
   if(!grid||!homepageCards.length||grid.dataset.grouped==='true')return;
 
