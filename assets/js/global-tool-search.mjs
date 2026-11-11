@@ -14,9 +14,11 @@ if(section){
     print:'Printing'
   };
 
-  const block=document.createElement('div');
-  block.className='global-tool-search';
-  block.innerHTML=`
+  const block=section.querySelector('[data-global-tool-search]')||document.createElement('div');
+  if(!block.isConnected){
+    block.className='global-tool-search';
+    block.dataset.globalToolSearch='';
+    block.innerHTML=`
     <form class="global-tool-search-form" role="search" aria-label="Search all Quicklio tools">
       <div class="global-tool-search-heading">
         <label for="global-tool-query">Find any Quicklio tool</label>
@@ -34,7 +36,8 @@ if(section){
       <p class="global-tool-search-status" role="status"></p>
       <div class="global-tool-search-grid"></div>
     </div>`;
-  section.prepend(block);
+    section.prepend(block);
+  }
 
   const form=block.querySelector('form');
   const input=block.querySelector('input');
