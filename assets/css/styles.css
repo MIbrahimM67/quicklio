@@ -627,9 +627,9 @@ textarea{min-height:8rem;resize:vertical}
 .hub-page .global-tool-search-heading p{margin:.3rem 0 .85rem;font-size:.86rem;color:var(--color-muted)}
 .hub-page .global-tool-search-field{display:grid;grid-template-columns:2.9rem minmax(0,1fr) auto;align-items:center;min-height:3.75rem;overflow:hidden;border:1px solid var(--color-rule-strong);border-radius:.85rem;background:white}
 .hub-page .global-tool-search-field>.icon{justify-self:center;color:var(--color-muted)}
-.hub-page .global-tool-search-field input{width:100%;min-width:0;height:100%;padding:.65rem .25rem;border:0;background:transparent;color:var(--color-ink);font:600 .95rem/1.5 inherit;outline:0}
+.hub-page .global-tool-search-field input{width:100%;min-width:0;height:100%;padding:.65rem .25rem;border:0;background:transparent;color:var(--color-ink);font-size:.95rem;font-weight:600;font-family:inherit;line-height:1.5;outline:0}
 .hub-page .global-tool-search-field:focus-within{outline:3px solid oklch(72% .13 139/.32);outline-offset:2px;border-color:var(--color-green)}
-.hub-page .global-tool-search-field button{align-self:stretch;margin:.3rem;padding:0 1.25rem;border:0;border-radius:.6rem;background:var(--color-ink);color:white;font:800 .88rem/1 inherit;cursor:pointer}
+.hub-page .global-tool-search-field button{align-self:stretch;margin:.3rem;padding:0 1.25rem;border:0;border-radius:.6rem;background:var(--color-ink);color:white;font-size:.88rem;font-weight:800;font-family:inherit;line-height:1;cursor:pointer}
 .hub-page .global-tool-search-field button:hover{background:var(--color-green)}
 .hub-page .global-tool-search-results{margin-top:1rem}
 .hub-page .global-tool-search-results[hidden]{display:none}
