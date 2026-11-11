@@ -224,6 +224,9 @@ document.addEventListener('pointerdown',(event)=>{
 })();
 
 const search=document.querySelector('[data-tool-search]');
+// Make search links from collection-page forms work on the homepage too.
+const incomingSearch=new URLSearchParams(location.search).get('q');
+if(search&&incomingSearch)search.value=incomingSearch;
 const cards=[...document.querySelectorAll('[data-tool-card]')];
 const filters=[...document.querySelectorAll('[data-tool-filter]')];
 const allowedFilters=new Set(['all','image','pdf','labels','social','finance','crafts','candle','halloween','christmas']);
