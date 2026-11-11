@@ -1,3 +1,4 @@
+import {searchToolCatalog} from '/assets/js/tool-search.mjs';
 document.documentElement.classList.add('js');
 
 /* ── Google Analytics 4 with explicit analytics consent ── */
@@ -228,68 +229,167 @@ const filters=[...document.querySelectorAll('[data-tool-filter]')];
 const allowedFilters=new Set(['all','image','pdf','labels','social','finance','crafts','candle','halloween','christmas']);
 const requestedFilter=new URLSearchParams(location.search).get('category');
 let activeFilter=allowedFilters.has(requestedFilter)?requestedFilter:'all';
+const catalog=cards.map(card=>({
+  card,
+  title:card.querySelector('h3')?.textContent?.trim()||'',
+  description:card.querySelector('.tool-card-copy p')?.textContent?.trim()||'',
+  keywords:card.dataset.search||'',
+  category:card.dataset.category||'',
+  path:new URL(card.getAttribute('href')||'/',location.origin).pathname
+}));
+const groups=[...document.querySelectorAll('[data-tool-group]')];
+const groupedGrid=document.querySelector('.tool-card-grid.is-grouped');
+const originalGroups=new Map(groups.map((group,index)=>[group,index]));
+const originalCards=new Map(cards.map((card,index)=>[card,index]));
+const groupJumps=[...document.querySelectorAll('[data-tool-group-jump]')];
+const jumpNav=groupJumps[0]?.parentElement;
+const countLabel=document.querySelector('.popular-section .section-heading .eyebrow');
+const searchPanel=search?document.createElement('div'):null;
+let bestMatches=[];
+
+if(searchPanel){
+  searchPanel.className='tool-search-results';
+  searchPanel.id='quicklio-search-results';
+  searchPanel.setAttribute('aria-label','Matching Quicklio tools');
+  searchPanel.hidden=true;
+  search.closest('.tool-search')?.after(searchPanel);
+  search.setAttribute('aria-controls',searchPanel.id);
+  const style=document.createElement('style');
+  style.id='quicklio-search-results-style';
+  style.textContent='.site-home .tool-search-results{max-width:44rem;margin-top:.55rem;padding:.65rem;border:1px solid var(--color-rule);border-radius:1rem;background:rgba(255,255,255,.97);box-shadow:0 12px 30px rgba(16,22,20,.09)}.site-home .tool-search-results[hidden]{display:none}.site-home .tool-search-results-heading{margin:.15rem .42rem .48rem;font-size:.78rem;font-weight:800;color:var(--color-muted)}.site-home .tool-search-result{display:flex;flex-direction:column;gap:.12rem;padding:.58rem .7rem;border-radius:.65rem;color:var(--color-ink);text-decoration:none}.site-home .tool-search-result:hover,.site-home .tool-search-result:focus-visible{background:rgba(25,115,70,.075);outline-offset:2px}.site-home .tool-search-result strong{font-size:.9rem;font-weight:800}.site-home .tool-search-result span{font-size:.78rem;line-height:1.35;color:var(--color-muted)}.site-home .tool-search-see-all{display:block;margin:.4rem .42rem .08rem;padding-top:.5rem;border-top:1px solid var(--color-rule);font-size:.82rem;font-weight:800;color:var(--color-ink);text-decoration:underline;text-underline-offset:2px}';
+  document.head.append(style);
+}
+
+function showSearchSuggestions(query,ranked){
+  if(!searchPanel)return;
+  searchPanel.hidden=!query;
+  if(!query)return;
+  const heading=document.createElement('p');
+  heading.className='tool-search-results-heading';
+  heading.setAttribute('role','status');
+  heading.textContent=ranked.length+' matching '+(ranked.length===1?'tool':'tools');
+  searchPanel.replaceChildren(heading);
+  if(!ranked.length){
+    const message=document.createElement('p');
+    message.className='tool-search-results-heading';
+    message.textContent='Try image, PDF, photo, print, or a shorter search.';
+    searchPanel.append(message);
+    return;
+  }
+  for(const {tool} of ranked.slice(0,5)){
+    const link=document.createElement('a');
+    link.className='tool-search-result';
+    link.href=tool.card.getAttribute('href');
+    const title=document.createElement('strong');
+    title.textContent=tool.title;
+    const description=document.createElement('span');
+    description.textContent=tool.description;
+    link.append(title,description);
+    searchPanel.append(link);
+  }
+  if(ranked.length>5){
+    const all=document.createElement('a');
+    all.className='tool-search-see-all';
+    all.href='#tools';
+    all.textContent='View all '+ranked.length+' matching tools';
+    searchPanel.append(all);
+  }
+}
+
+function reorderGroupsAndCards(query,ranked){
+  if(!groupedGrid)return;
+  const scores=new Map(ranked.map(({tool,score})=>[tool.card,score]));
+  const groupScores=new Map(groups.map(group=>[
+    group,Math.max(0,...[...group.querySelectorAll('[data-tool-card]')].map(card=>scores.get(card)||0))
+  ]));
+  const sortedGroups=[...groups].sort((a,b)=>
+    (query?groupScores.get(b)-groupScores.get(a):0)||originalGroups.get(a)-originalGroups.get(b)
+  );
+  for(const group of sortedGroups){
+    const inner=group.querySelector('.tool-subcategory-grid');
+    if(inner){
+      const ordered=[...inner.querySelectorAll('[data-tool-card]')].sort((a,b)=>
+        (query?(scores.get(b)||0)-(scores.get(a)||0):0)||originalCards.get(a)-originalCards.get(b)
+      );
+      for(const card of ordered)inner.append(card);
+    }
+    groupedGrid.append(group);
+  }
+  if(jumpNav){
+    const position=new Map(sortedGroups.map((group,index)=>[group.dataset.toolGroup,index]));
+    for(const jump of [...groupJumps].sort((a,b)=>
+      (position.get(a.dataset.toolGroupJump)??0)-(position.get(b.dataset.toolGroupJump)??0)
+    ))jumpNav.append(jump);
+  }
+}
 
 function applyToolFilter(){
   if(!cards.length)return;
-  const q=(search?.value||'').trim().toLowerCase();
-  let visible=0;
-  for(const card of cards){
-    const category=card.dataset.category||'';
-    const haystack=(card.dataset.search||card.textContent||'').toLowerCase();
-    const matchesCategory=activeFilter==='all'||category===activeFilter;
-    const matchesSearch=!q||haystack.includes(q);
-    const show=matchesCategory&&matchesSearch;
-    card.hidden=!show;
-    if(show)visible++;
-  }
-
-  const groups=[...document.querySelectorAll('[data-tool-group]')];
+  const q=(search?.value||'').trim();
+  const ranked=searchToolCatalog(catalog,q).filter(({tool})=>
+    activeFilter==='all'||tool.category===activeFilter
+  );
+  bestMatches=ranked;
+  const matchedCards=new Set(ranked.map(({tool})=>tool.card));
+  for(const card of cards)card.hidden=!matchedCards.has(card);
+  reorderGroupsAndCards(q,ranked);
   for(const group of groups){
     const visibleCards=[...group.querySelectorAll('[data-tool-card]')].filter(card=>!card.hidden);
     group.hidden=visibleCards.length===0;
     const count=group.querySelector('[data-tool-group-count]');
     if(count)count.textContent=visibleCards.length+' '+(visibleCards.length===1?'tool':'tools');
   }
-  for(const jump of document.querySelectorAll('[data-tool-group-jump]')){
+  for(const jump of groupJumps){
     const group=groups.find(item=>item.dataset.toolGroup===jump.dataset.toolGroupJump);
     jump.hidden=!group||group.hidden;
   }
-
   const empty=document.querySelector('[data-tools-empty]');
-  if(empty)empty.hidden=visible>0;
+  if(empty)empty.hidden=ranked.length>0;
+  if(countLabel)countLabel.textContent=(q||activeFilter!=='all')
+    ?ranked.length+' matching '+(ranked.length===1?'tool':'tools')
+    :cards.length+' current tools';
+  showSearchSuggestions(q,ranked);
 }
 
-for(const button of filters){
-  button.classList.toggle('is-active',button.dataset.toolFilter===activeFilter);
-  button.addEventListener('click',()=>{
-    activeFilter=button.dataset.toolFilter||'all';
-    for(const other of filters)other.classList.toggle('is-active',other===button);
-    applyToolFilter();
-  });
+function activateFilter(category){
+  activeFilter=category;
+  for(const button of filters)button.classList.toggle('is-active',button.dataset.toolFilter===activeFilter);
+  applyToolFilter();
 }
-search?.addEventListener('input',applyToolFilter);
+for(const button of filters)button.addEventListener('click',()=>activateFilter(button.dataset.toolFilter||'all'));
+search?.addEventListener('input',()=>{
+  // A new search searches the entire catalog, not the last selected category.
+  if((search.value||'').trim()&&activeFilter!=='all')activateFilter('all');
+  else applyToolFilter();
+});
 function trackSiteSearch(){
   const q=(search?.value||'').trim();
   if(!q)return;
-  const visibleCards=cards.filter(card=>!card.hidden);
   quicklioTrack('site_search_used',{
     query_length:q.length,
-    result_count:visibleCards.length,
-    had_result:visibleCards.length?1:0,
+    result_count:bestMatches.length,
+    had_result:bestMatches.length?1:0,
     category_filter:activeFilter
   });
 }
 const openFirstMatch=()=>{
-  const first=cards.find(card=>!card.hidden);
+  if(!search?.value.trim()){
+    document.getElementById('tools')?.scrollIntoView({behavior:'smooth'});
+    return;
+  }
   trackSiteSearch();
+  const first=bestMatches[0]?.tool.card;
   if(first?.href)location.href=first.href;
 };
-search?.addEventListener('keydown',(event)=>{
-  if(event.key!=='Enter')return;
-  openFirstMatch();
+search?.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&search.value){
+    search.value='';
+    applyToolFilter();
+  }else if(event.key==='Enter')openFirstMatch();
 });
 document.querySelector('.tool-search button')?.addEventListener('click',openFirstMatch);
-applyToolFilter();
+document.querySelector('.tool-search button')?.setAttribute('aria-label','Open best matching tool');
+activateFilter(activeFilter);
 
 for(const shareButton of document.querySelectorAll('[data-share-quicklio]')){
   shareButton.addEventListener('click',async()=>{
