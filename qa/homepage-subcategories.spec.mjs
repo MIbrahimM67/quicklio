@@ -41,3 +41,23 @@ test('homepage search keeps only subcategories that contain matching cards',asyn
   await expect(page.locator('[data-tool-group="images-photos"]')).toBeHidden();
   await expect(page.locator('[data-tools-empty]')).toBeHidden();
 });
+
+
+test('homepage search finds image-related tools across categories and ranks suggestions',async({page})=>{
+  await page.goto('/');
+  await page.locator('[data-tool-filter="pdf"]').click();
+  await page.locator('[data-tool-search]').fill('image');
+  await expect(page.locator('[data-tool-filter="all"]')).toHaveClass(/is-active/);
+  const imageCount=await page.locator('[data-tool-card][data-category="image"]').count();
+  await expect(page.locator('[data-tool-card][data-category="image"]:visible')).toHaveCount(imageCount);
+  await expect(page.locator('[data-tool-card][href="/en/pdf/image-to-pdf/"]')).toBeVisible();
+  await expect(page.locator('[data-tool-card][href="/en/crafts/cross-stitch-pattern-maker/"]')).toBeVisible();
+  await expect(page.locator('[data-tool-card][href="/en/candles/candle-fragrance-calculator/"]')).toBeHidden();
+  await expect(page.locator('.tool-search-results .tool-search-result').first()).toBeVisible();
+  await expect(page.locator('.popular-section .eyebrow')).toContainText('matching');
+
+  await page.locator('[data-tool-search]').fill('passprot');
+  await expect(page.locator('.tool-search-results .tool-search-result').first()).toContainText('Passport');
+  await page.locator('[data-tool-search]').fill('pdf to word');
+  await expect(page.locator('.tool-search-results .tool-search-result').first()).toContainText('PDF to Word');
+});
