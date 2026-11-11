@@ -25,3 +25,6 @@ const relatedByPath={
 const related=(relatedByPath[path]||[]).map(href=>tools.find(t=>t.href===href)).filter(Boolean);
 if(document.body.classList.contains('tool-page')&&related.length){const main=document.querySelector('main');if(main&&!main.querySelector('[data-opportunity-related]')){const sec=document.createElement('section');sec.className='shell';sec.dataset.opportunityRelated='';sec.innerHTML='<div class="section-heading"><div><p class="eyebrow">Related specialist tools</p><h2>Continue your workflow</h2></div></div><div class="tool-card-grid"></div>';const g=sec.querySelector('.tool-card-grid');related.forEach(t=>g.append(card(t)));main.append(sec)}}
 const groups=[...document.querySelectorAll('.mega-group')];for(const t of tools){if(document.querySelector(`.mega-link[href="${t.href}"]`))continue;const group=groups.find(g=>{const h=g.querySelector('.mega-group-title')?.textContent||'';return t.category==='image'?/Images/i.test(h):/Planning|craft/i.test(h)});if(group){const a=document.createElement('a');a.className='mega-link';a.href=t.href;a.dataset.megaCat=t.category;a.innerHTML=`<span><strong>${esc(t.title)}</strong><small>${esc(t.desc)}</small></span>`;group.append(a)}}
+
+// Shared tool metadata for cross-category search on collection pages.
+export {tools as opportunityTools};
